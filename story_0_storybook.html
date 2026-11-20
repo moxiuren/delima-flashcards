@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link rel="icon" href="data:,">
-  <title>故事绘本 · 精装羊皮纸书页</title>
+  <title>经典故事 · 精装羊皮纸书页</title>
   <style>
     :root {
       --parchment: #F6F1E5;
@@ -45,10 +45,11 @@
       justify-content: center;
     }
 
-    /* 600x600 精准正方形容器 */
+    /* 自适应 1:1 严格正方形容器 */
     .book-stage {
-      width: 600px;
-      height: 600px;
+      width: min(100vw, 100vh, 620px);
+      height: min(100vw, 100vh, 620px);
+      aspect-ratio: 1 / 1;
       position: relative;
       background: var(--parchment);
       overflow: hidden;
@@ -111,8 +112,9 @@
     .book-header {
       position: relative;
       z-index: 10;
-      height: 48px;
-      padding: 10px 22px 4px;
+      height: 44px;
+      flex-shrink: 0;
+      padding: 8px 18px 4px;
       display: flex;
       align-items: center;
       justify-content: space-between;
@@ -182,20 +184,22 @@
       position: relative;
       z-index: 4;
       flex: 1;
+      min-height: 0;
       overflow: hidden;
-      padding: 12px 24px 8px;
+      padding: 10px 18px 6px;
       display: flex;
     }
 
     .page-scene {
       position: absolute;
-      inset: 12px 24px 8px;
+      inset: 10px 18px 6px;
       opacity: 0;
       pointer-events: none;
       transform: translateX(18px) scale(0.98);
       transition: opacity 0.35s ease, transform 0.35s cubic-bezier(0.2, 0.8, 0.25, 1);
       display: flex;
       flex-direction: column;
+      min-height: 0;
     }
     .page-scene.active {
       opacity: 1;
@@ -228,39 +232,40 @@
     }
     .cover-title {
       font-family: var(--serif);
-      font-size: 32px;
+      font-size: clamp(20px, 5vmin, 32px);
       font-weight: 700;
       line-height: 1.25;
       color: var(--crimson);
-      margin-bottom: 8px;
+      margin-bottom: 6px;
       letter-spacing: 1px;
       text-shadow: 0 1px 1px rgba(255,255,255,0.8);
-      max-width: 480px;
+      max-width: 92%;
     }
     .cover-sub {
       font-family: var(--serif);
-      font-size: 14px;
+      font-size: clamp(12px, 2.4vmin, 14px);
       color: var(--ink-secondary);
       font-style: italic;
-      margin-bottom: 22px;
-      max-width: 460px;
+      margin-bottom: clamp(10px, 3vmin, 20px);
+      max-width: 92%;
     }
     .cover-art-container {
-      width: 140px;
-      height: 140px;
+      width: clamp(82px, 22vmin, 132px);
+      height: clamp(82px, 22vmin, 132px);
       border-radius: 50%;
       border: 2px dashed var(--gold-border);
       background: radial-gradient(circle, #FFFDF8, var(--parchment-deep));
       display: flex;
       align-items: center;
       justify-content: center;
-      margin-bottom: 24px;
+      margin-bottom: clamp(12px, 3vmin, 22px);
       box-shadow: 0 6px 16px rgba(140, 109, 46, 0.15);
       position: relative;
+      flex-shrink: 0;
     }
     .cover-art-container svg {
-      width: 84px;
-      height: 84px;
+      width: 60%;
+      height: 60%;
       fill: var(--gold-dark);
     }
     .start-read-btn {
@@ -318,10 +323,12 @@
 
     .story-card-box {
       flex: 1;
+      min-height: 0;
+      overflow-y: auto;
       background: var(--parchment-card);
       border: 1px solid var(--border-inner);
       border-radius: 8px;
-      padding: 22px 24px;
+      padding: clamp(14px, 3.2vmin, 22px) clamp(14px, 3.5vmin, 24px);
       display: flex;
       flex-direction: column;
       justify-content: center;
@@ -356,8 +363,8 @@
     }
     .story-text-p {
       font-family: var(--serif);
-      font-size: 18px;
-      line-height: 1.8;
+      font-size: clamp(14px, 3vmin, 18px);
+      line-height: 1.72;
       color: var(--ink-primary);
       text-align: justify;
       letter-spacing: 0.4px;
@@ -367,9 +374,11 @@
     /* ===== PAGE LAST: 寓意思考末页 ===== */
     .ending-view {
       height: 100%;
+      min-height: 0;
+      overflow-y: auto;
       display: flex;
       flex-direction: column;
-      gap: 12px;
+      gap: 10px;
     }
     .ending-badge {
       text-align: center;
@@ -459,12 +468,13 @@
       transform: translateY(-2px);
     }
 
-    /* 底部操作工具栏 (高度 46px) */
+    /* 底部操作工具栏 */
     .book-footer {
       position: relative;
       z-index: 10;
-      height: 46px;
-      padding: 4px 20px 8px;
+      height: 44px;
+      flex-shrink: 0;
+      padding: 4px 16px 6px;
       display: flex;
       align-items: center;
       justify-content: space-between;
@@ -703,7 +713,7 @@
           </svg>
         </div>
         <button class="start-read-btn" id="startReadBtn">
-          <span>翻开绘本</span>
+          <span>开始阅读</span>
           <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z"/></svg>
         </button>
       `;
