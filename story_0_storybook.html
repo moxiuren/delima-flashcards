@@ -1,0 +1,872 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>故事绘本 · 精装羊皮纸书页</title>
+  <style>
+    :root {
+      --parchment: #F6F1E5;
+      --parchment-deep: #ECE3D0;
+      --parchment-card: #FAF6ED;
+      --ink-primary: #2B2118;
+      --ink-secondary: #5C4E3E;
+      --ink-muted: #8C7B68;
+      --gold-dark: #8C6D2E;
+      --gold-primary: #C29B38;
+      --gold-light: #E8D399;
+      --gold-border: #D8BE75;
+      --crimson: #8B261E;
+      --crimson-soft: #F4E8E6;
+      --border-outer: #C9BBA2;
+      --border-inner: #DFCDB3;
+      --serif: Georgia, "Noto Serif SC", "Songti SC", STSong, "Times New Roman", serif;
+      --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Microsoft YaHei", sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: #DCD3C1;
+      font-family: var(--sans);
+      color: var(--ink-primary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* 600x600 精准正方形容器 */
+    .book-stage {
+      width: 600px;
+      height: 600px;
+      position: relative;
+      background: var(--parchment);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 10px 30px rgba(43, 33, 24, 0.25), inset 0 0 40px rgba(140, 109, 46, 0.08);
+      border: 1px solid var(--border-outer);
+    }
+
+    /* 复古羊皮纸纹理与边缘阴影 */
+    .paper-texture {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      background: radial-gradient(circle at 50% 50%, rgba(255,255,255,0.4) 0%, rgba(216, 190, 117, 0.15) 100%);
+      mix-blend-mode: multiply;
+      z-index: 1;
+    }
+
+    /* 烫金双线边框 + 四角卷草纹 */
+    .ornament-frame {
+      position: absolute;
+      inset: 8px;
+      border: 1.5px solid var(--gold-border);
+      pointer-events: none;
+      z-index: 2;
+    }
+    .ornament-frame::before {
+      content: "";
+      position: absolute;
+      inset: 4px;
+      border: 1px dashed rgba(194, 155, 56, 0.5);
+    }
+    .corner-mark {
+      position: absolute;
+      width: 18px;
+      height: 18px;
+      pointer-events: none;
+      z-index: 3;
+      color: var(--gold-primary);
+    }
+    .c-tl { top: 12px; left: 12px; }
+    .c-tr { top: 12px; right: 12px; transform: scaleX(-1); }
+    .c-bl { bottom: 12px; left: 12px; transform: scaleY(-1); }
+    .c-br { bottom: 12px; right: 12px; transform: scale(-1); }
+
+    /* 书脊装订立体暗影 (左侧书卷折痕) */
+    .spine-crease {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      left: 0;
+      width: 16px;
+      background: linear-gradient(to right, rgba(0,0,0,0.18), rgba(0,0,0,0.05) 50%, transparent);
+      pointer-events: none;
+      z-index: 5;
+    }
+
+    /* 顶部顶栏 (高度 48px) */
+    .book-header {
+      position: relative;
+      z-index: 10;
+      height: 48px;
+      padding: 10px 22px 4px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid rgba(216, 190, 117, 0.35);
+    }
+    .header-tag {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      color: var(--crimson);
+      text-transform: uppercase;
+    }
+    .header-tag svg {
+      width: 14px;
+      height: 14px;
+      fill: currentColor;
+    }
+
+    /* 分段进度条 */
+    .progress-track-group {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      flex: 1;
+      max-width: 250px;
+      margin: 0 16px;
+    }
+    .p-seg {
+      flex: 1;
+      height: 5px;
+      background: rgba(140, 109, 46, 0.18);
+      border-radius: 3px;
+      overflow: hidden;
+      cursor: pointer;
+      position: relative;
+      transition: transform 0.2s;
+    }
+    .p-seg:hover {
+      transform: scaleY(1.5);
+    }
+    .p-fill {
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, var(--gold-dark), var(--gold-primary));
+      transform-origin: left center;
+      transform: scaleX(0);
+      transition: transform 0.08s linear;
+    }
+    .p-seg.done .p-fill {
+      transform: scaleX(1);
+    }
+
+    .page-indicator {
+      font-family: var(--serif);
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--gold-dark);
+      min-width: 50px;
+      text-align: right;
+    }
+
+    /* 翻页主舞台 (占据剩余空间) */
+    .book-main {
+      position: relative;
+      z-index: 4;
+      flex: 1;
+      overflow: hidden;
+      padding: 12px 24px 8px;
+      display: flex;
+    }
+
+    .page-scene {
+      position: absolute;
+      inset: 12px 24px 8px;
+      opacity: 0;
+      pointer-events: none;
+      transform: translateX(18px) scale(0.98);
+      transition: opacity 0.35s ease, transform 0.35s cubic-bezier(0.2, 0.8, 0.25, 1);
+      display: flex;
+      flex-direction: column;
+    }
+    .page-scene.active {
+      opacity: 1;
+      pointer-events: auto;
+      transform: translateX(0) scale(1);
+    }
+
+    /* ===== PAGE 0: 封面页 ===== */
+    .cover-view {
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 10px 14px;
+    }
+    .cover-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 3px 12px;
+      border: 1px solid var(--gold-border);
+      border-radius: 20px;
+      background: rgba(194, 155, 56, 0.12);
+      font-size: 12px;
+      color: var(--crimson);
+      font-weight: 600;
+      margin-bottom: 12px;
+    }
+    .cover-title {
+      font-family: var(--serif);
+      font-size: 32px;
+      font-weight: 700;
+      line-height: 1.25;
+      color: var(--crimson);
+      margin-bottom: 8px;
+      letter-spacing: 1px;
+      text-shadow: 0 1px 1px rgba(255,255,255,0.8);
+      max-width: 480px;
+    }
+    .cover-sub {
+      font-family: var(--serif);
+      font-size: 14px;
+      color: var(--ink-secondary);
+      font-style: italic;
+      margin-bottom: 22px;
+      max-width: 460px;
+    }
+    .cover-art-container {
+      width: 140px;
+      height: 140px;
+      border-radius: 50%;
+      border: 2px dashed var(--gold-border);
+      background: radial-gradient(circle, #FFFDF8, var(--parchment-deep));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 24px;
+      box-shadow: 0 6px 16px rgba(140, 109, 46, 0.15);
+      position: relative;
+    }
+    .cover-art-container svg {
+      width: 84px;
+      height: 84px;
+      fill: var(--gold-dark);
+    }
+    .start-read-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: linear-gradient(135deg, var(--crimson), #6C1C16);
+      color: #FFF9ED;
+      border: 1px solid #FFD382;
+      padding: 10px 28px;
+      border-radius: 24px;
+      font-size: 14px;
+      font-weight: 600;
+      letter-spacing: 1px;
+      cursor: pointer;
+      box-shadow: 0 6px 14px rgba(139, 38, 30, 0.28);
+      transition: all 0.2s;
+    }
+    .start-read-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 18px rgba(139, 38, 30, 0.35);
+      background: linear-gradient(135deg, #9C2E25, #7D211A);
+    }
+
+    /* ===== PAGE 1..N: 故事章节页 ===== */
+    .story-view {
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+    }
+    .act-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 6px 0 10px;
+      border-bottom: 1.5px solid var(--gold-light);
+      margin-bottom: 14px;
+    }
+    .act-tag {
+      font-family: var(--serif);
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      color: var(--crimson);
+      text-transform: uppercase;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .act-title {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--ink-secondary);
+    }
+
+    .story-card-box {
+      flex: 1;
+      background: var(--parchment-card);
+      border: 1px solid var(--border-inner);
+      border-radius: 8px;
+      padding: 22px 24px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      box-shadow: 0 4px 12px rgba(43, 33, 24, 0.05), inset 0 0 16px rgba(236, 227, 208, 0.5);
+      position: relative;
+    }
+    .story-card-box::before {
+      content: "“";
+      position: absolute;
+      top: 6px;
+      left: 14px;
+      font-family: var(--serif);
+      font-size: 56px;
+      color: rgba(194, 155, 56, 0.22);
+      line-height: 1;
+      pointer-events: none;
+    }
+    .story-illus-icon {
+      width: 52px;
+      height: 52px;
+      margin: 0 auto 14px;
+      color: var(--gold-dark);
+      opacity: 0.85;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .story-illus-icon svg {
+      width: 100%;
+      height: 100%;
+      fill: currentColor;
+    }
+    .story-text-p {
+      font-family: var(--serif);
+      font-size: 18px;
+      line-height: 1.8;
+      color: var(--ink-primary);
+      text-align: justify;
+      letter-spacing: 0.4px;
+      text-indent: 2em;
+    }
+
+    /* ===== PAGE LAST: 寓意思考末页 ===== */
+    .ending-view {
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .ending-badge {
+      text-align: center;
+      font-family: var(--serif);
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--crimson);
+      letter-spacing: 2px;
+      padding: 4px 0;
+      border-bottom: 1px dashed var(--gold-border);
+    }
+    .moral-card {
+      background: linear-gradient(135deg, #FFFDF8, #FAF2E1);
+      border: 1.5px solid var(--gold-border);
+      border-radius: 8px;
+      padding: 16px 20px;
+      position: relative;
+      box-shadow: 0 4px 12px rgba(140, 109, 46, 0.08);
+    }
+    .moral-card-label {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--gold-dark);
+      text-transform: uppercase;
+      margin-bottom: 8px;
+      letter-spacing: 0.5px;
+    }
+    .moral-card-text {
+      font-family: var(--serif);
+      font-size: 16px;
+      line-height: 1.6;
+      font-weight: 600;
+      color: var(--crimson);
+    }
+
+    .reflection-card {
+      background: #FAF6ED;
+      border: 1px solid var(--border-inner);
+      border-radius: 8px;
+      padding: 16px 20px;
+      position: relative;
+    }
+    .reflection-card-label {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--ink-secondary);
+      margin-bottom: 8px;
+      letter-spacing: 0.5px;
+    }
+    .reflection-card-text {
+      font-family: var(--serif);
+      font-size: 15px;
+      line-height: 1.6;
+      color: var(--ink-primary);
+    }
+
+    .ending-actions {
+      margin-top: auto;
+      display: flex;
+      justify-content: center;
+      padding-bottom: 4px;
+    }
+    .replay-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: linear-gradient(135deg, #B58D2D, #8C6D2E);
+      color: #FFFFFF;
+      border: none;
+      padding: 10px 24px;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 1px;
+      cursor: pointer;
+      box-shadow: 0 4px 12px rgba(140, 109, 46, 0.25);
+      transition: all 0.2s;
+    }
+    .replay-btn:hover {
+      background: linear-gradient(135deg, #C29B38, #9E7B35);
+      transform: translateY(-2px);
+    }
+
+    /* 底部操作工具栏 (高度 46px) */
+    .book-footer {
+      position: relative;
+      z-index: 10;
+      height: 46px;
+      padding: 4px 20px 8px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-top: 1px solid rgba(216, 190, 117, 0.35);
+    }
+    .btn-group-nav {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .book-btn {
+      background: var(--parchment-card);
+      border: 1px solid var(--gold-border);
+      color: var(--ink-primary);
+      padding: 5px 12px;
+      border-radius: 14px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      transition: all 0.18s;
+    }
+    .book-btn:hover {
+      background: #FFF;
+      border-color: var(--gold-dark);
+      color: var(--crimson);
+    }
+    .book-btn:active {
+      transform: scale(0.97);
+    }
+    .book-btn.primary {
+      background: rgba(194, 155, 56, 0.18);
+      border-color: var(--gold-dark);
+      color: var(--gold-dark);
+    }
+
+    .key-tip {
+      font-size: 11px;
+      color: var(--ink-muted);
+      letter-spacing: 0.5px;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="book-stage" id="bookStage">
+    <!-- 纸质微噪与光晕 -->
+    <div class="paper-texture"></div>
+    <div class="spine-crease"></div>
+
+    <!-- 烫金边框与四个角花装饰 -->
+    <div class="ornament-frame"></div>
+    <svg class="corner-mark c-tl" viewBox="0 0 24 24"><path fill="currentColor" d="M2,2 L14,2 C14,6 10,6 6,10 C6,14 2,14 2,2 Z"/></svg>
+    <svg class="corner-mark c-tr" viewBox="0 0 24 24"><path fill="currentColor" d="M2,2 L14,2 C14,6 10,6 6,10 C6,14 2,14 2,2 Z"/></svg>
+    <svg class="corner-mark c-bl" viewBox="0 0 24 24"><path fill="currentColor" d="M2,2 L14,2 C14,6 10,6 6,10 C6,14 2,14 2,2 Z"/></svg>
+    <svg class="corner-mark c-br" viewBox="0 0 24 24"><path fill="currentColor" d="M2,2 L14,2 C14,6 10,6 6,10 C6,14 2,14 2,2 Z"/></svg>
+
+    <!-- 顶栏 -->
+    <header class="book-header">
+      <div class="header-tag" id="bookTag">
+        <svg viewBox="0 0 24 24"><path d="M12 3L1 9l4 2.18v6L12 21l7-3.82v-6l2-1.09V17h2V9L12 3zm6.82 6L12 12.72 5.18 9 12 5.28 18.82 9zM17 15.99l-5 2.73-5-2.73v-3.72L12 15l5-2.73v3.72z"/></svg>
+        <span id="uSubject">安徒生童话</span>
+      </div>
+
+      <!-- 分段进度条 -->
+      <div class="progress-track-group" id="trackGroup"></div>
+
+      <div class="page-indicator" id="pageIndicator">1 / 6</div>
+    </header>
+
+    <!-- 主画卷舞台 (动态生成各幕) -->
+    <main class="book-main" id="bookMain"></main>
+
+    <!-- 底栏 -->
+    <footer class="book-footer">
+      <div class="btn-group-nav">
+        <button class="book-btn" id="prevBtn" title="上一页 (←)">上一页</button>
+        <button class="book-btn primary" id="playBtn" title="暂停/播放 (空格)">暂停</button>
+        <button class="book-btn" id="nextBtn" title="下一页 (→)">下一页</button>
+      </div>
+
+      <div class="key-tip">支持 ← → 翻页 · 空格暂停</div>
+
+      <div class="btn-group-nav">
+        <button class="book-btn" id="demoBtn">切换样例</button>
+      </div>
+    </footer>
+  </div>
+
+  <script>
+    // 两组高品质内置故事样本
+    const SAMPLES = [
+      {
+        type: "story",
+        id: "story_andersen_001",
+        subject: "Cerita Klasik · 安徒生童话",
+        collection: "安徒生童话",
+        title: "卖火柴的小女孩",
+        subtitle: "The Little Match Girl · Gadis Penjual Mancis",
+        pages: [
+          {
+            caption: "第一幕 · 寒冬除夕夜",
+            text: "大雪纷飞的除夕夜，又冷又黑，可怜的小女孩赤着脚走在冰凉的街头。她的小兜里装着许多火柴，却一整天都没有卖出一根，饥寒交迫。"
+          },
+          {
+            caption: "第二幕 · 第一根火柴",
+            text: "她缩在街角的避风处，颤抖着擦燃了第一根火柴。哧！一朵明亮温暖的火花冒了出来，仿佛变成了一个暖烘烘的大铁炉，带给她短暂的温暖。"
+          },
+          {
+            caption: "第三幕 · 烤鹅与圣诞树",
+            text: "第二根与第三根火柴相继点燃。她看见了香喷喷的烤鹅正在向她走来，还看见了一棵缀满数千颗明亮烛光的美丽圣诞树，宛如梦境般璀璨。"
+          },
+          {
+            caption: "第四幕 · 慈祥的奶奶",
+            text: "在最后一片耀眼的火柴光芒中，思念已久的慈祥奶奶出现了。奶奶微笑着把小女孩抱在怀里，飞向了没有寒冷、饥饿与痛苦的天堂。"
+          }
+        ],
+        moral: "珍惜身边的温饱与亲情，对世间每一个弱小者怀抱怜悯与关怀。",
+        reflection: "如果你在除夕雪夜遇见这位小女孩，你会怎样伸出援手帮助她？"
+      },
+      {
+        type: "story",
+        id: "story_1001_001",
+        subject: "Cerita Rakyat · 一千零一夜",
+        collection: "一千零一夜",
+        title: "阿拉丁与神灯",
+        subtitle: "Aladdin and the Magic Lamp · Lampu Ajaib",
+        pages: [
+          {
+            caption: "第一幕 · 神秘的宝库",
+            text: "贫穷善良的少年阿拉丁被邪恶巫师引诱到了古老神秘的地下洞穴，命他深入宝库取回一盏破旧的铜油灯，却将他困在封闭的石门之中。"
+          },
+          {
+            caption: "第二幕 · 灯神现身",
+            text: "困顿之中，阿拉丁无意间轻轻擦拭了手中的油灯。刹那间青烟滚滚，一个威力无边的蓝色神灯精灵赫然出现，尊称他为主人并听候吩咐。"
+          },
+          {
+            caption: "第三幕 · 智慧与试炼",
+            text: "在灯神的帮助下，阿拉丁解除了城市的危机，并与善良的公主喜结连理。不料狡猾的巫师假冒换灯人，用崭新的油灯骗走了神灯并劫走城堡。"
+          },
+          {
+            caption: "第四幕 · 勇敢的凯旋",
+            text: "阿拉丁毫不畏惧，凭借过人的胆识潜入城堡智取巫师，成功夺回神灯。他许下愿望使城堡物归原位，让整个王国重享和平与幸福。"
+          }
+        ],
+        moral: "真正的力量不仅来自神奇的机缘，更源自面对困厄时的善良、智慧与勇气。",
+        reflection: "如果神灯精灵能帮你实现一个帮助他人的愿望，你会许下什么？"
+      }
+    ];
+
+    // URL 安全 Base64 UTF-8 解码
+    function loadStoryData() {
+      try {
+        const raw = new URLSearchParams(location.search).get("d");
+        if (!raw) return SAMPLES[0];
+        const bin = atob(raw.replace(/-/g, "+").replace(/_/g, "/"));
+        const str = new TextDecoder().decode(Uint8Array.from(bin, c => c.charCodeAt(0)));
+        const data = JSON.parse(str);
+        if (data && data.pages && Array.isArray(data.pages)) {
+          return { ...SAMPLES[0], ...data };
+        }
+        return SAMPLES[0];
+      } catch (err) {
+        console.warn("解析数据参数失败，回退到默认示例:", err);
+        return SAMPLES[0];
+      }
+    }
+
+    let story = loadStoryData();
+    let sampleIdx = 0;
+    let curPage = 0;
+    let totalPages = 0; // 封面(1) + 故事页(N) + 结局页(1)
+    let elapsed = 0;
+    let playing = true;
+    let lastTime = performance.now();
+    let DURS = [];
+
+    const bookMain = document.getElementById("bookMain");
+    const trackGroup = document.getElementById("trackGroup");
+    const pageIndicator = document.getElementById("pageIndicator");
+    const uSubject = document.getElementById("uSubject");
+    const playBtn = document.getElementById("playBtn");
+    const prevBtn = document.getElementById("prevBtn");
+    const nextBtn = document.getElementById("nextBtn");
+    const demoBtn = document.getElementById("demoBtn");
+
+    // 经典矢量装饰小图标 (SVG)
+    const ICONS = [
+      `<svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>`,
+      `<svg viewBox="0 0 24 24"><path d="M12 3c-4.97 0-9 4.03-9 9 0 2.12.74 4.07 1.97 5.61L4.35 19.4c-.39.39-.39 1.02 0 1.41.39.39 1.02.39 1.41 0l1.9-1.9C9.22 19.59 10.56 20 12 20c4.97 0 9-4.03 9-9s-4.03-9-9-9zm0 15c-3.31 0-6-2.69-6-6s2.69-6 6-6 6 2.69 6 6-2.69 6-6 6z"/></svg>`,
+      `<svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/></svg>`,
+      `<svg viewBox="0 0 24 24"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>`
+    ];
+
+    function buildScenes(data) {
+      bookMain.innerHTML = "";
+      trackGroup.innerHTML = "";
+      DURS = [];
+
+      uSubject.textContent = data.collection || data.subject || "童话故事";
+
+      const pageCount = (data.pages ? data.pages.length : 0);
+      totalPages = 1 + pageCount + 1; // 封面 + N幕 + 结局
+
+      // 1. 构建顶部进度分段条
+      for (let i = 0; i < totalPages; i++) {
+        const seg = document.createElement("div");
+        seg.className = "p-seg";
+        seg.dataset.idx = i;
+        const fill = document.createElement("div");
+        fill.className = "p-fill";
+        seg.appendChild(fill);
+        seg.onclick = () => jumpTo(i);
+        trackGroup.appendChild(seg);
+
+        // 各页时长：封面 3.5s，每幕约 4.8s~5.6s，结语 6.5s
+        if (i === 0) {
+          DURS.push(3600);
+        } else if (i <= pageCount) {
+          const txtLen = (data.pages[i - 1].text || "").length;
+          DURS.push(Math.max(4500, Math.min(6200, txtLen * 78)));
+        } else {
+          DURS.push(6500);
+        }
+      }
+
+      // 2. 构建 Page 0: 封面
+      const coverScene = document.createElement("div");
+      coverScene.className = "page-scene cover-view";
+      coverScene.innerHTML = `
+        <div class="cover-badge">${data.subject || "世界经典童话"}</div>
+        <h1 class="cover-title">${data.title || "经典故事"}</h1>
+        <div class="cover-sub">${data.subtitle || ""}</div>
+        <div class="cover-art-container">
+          <svg viewBox="0 0 24 24">
+            <path d="M18 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zM6 4h5v8l-2.5-1.5L6 12V4z"/>
+          </svg>
+        </div>
+        <button class="start-read-btn" id="startReadBtn">
+          <span>翻开绘本</span>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z"/></svg>
+        </button>
+      `;
+      bookMain.appendChild(coverScene);
+      coverScene.querySelector("#startReadBtn").onclick = () => jumpTo(1);
+
+      // 3. 构建 Page 1..N: 故事章节
+      (data.pages || []).forEach((pg, idx) => {
+        const scene = document.createElement("div");
+        scene.className = "page-scene story-view";
+        const iconSvg = ICONS[idx % ICONS.length];
+        scene.innerHTML = `
+          <div class="act-header">
+            <div class="act-tag">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg>
+              <span>第 ${idx + 1} 幕 / 共 ${pageCount} 幕</span>
+            </div>
+            <div class="act-title">${pg.caption || `第 ${idx + 1} 幕`}</div>
+          </div>
+          <div class="story-card-box">
+            <div class="story-illus-icon">${iconSvg}</div>
+            <p class="story-text-p">${pg.text || ""}</p>
+          </div>
+        `;
+        bookMain.appendChild(scene);
+      });
+
+      // 4. 构建 Page Last: 寓意思考末页
+      const endScene = document.createElement("div");
+      endScene.className = "page-scene ending-view";
+      endScene.innerHTML = `
+        <div class="ending-badge">· 故事完结 · 思考与启示 ·</div>
+        <div class="moral-card">
+          <div class="moral-card-label">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>
+            <span>故事寓意 · Pengajaran</span>
+          </div>
+          <div class="moral-card-text">${data.moral || "善良与真诚是照亮心灵的光芒。"}</div>
+        </div>
+        <div class="reflection-card">
+          <div class="reflection-card-label">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M9 21c0 .55.45 1 1 1h4c.55 0 1-.45 1-1v-1H9v1zm3-19C8.14 2 5 5.14 5 9c0 2.38 1.19 4.47 3 5.74V17c0 .55.45 1 1 1h6c.55 0 1-.45 1-1v-2.26c1.81-1.27 3-3.36 3-5.74 0-3.86-3.14-7-7-7z"/></svg>
+            <span>拓展思考 · Soalan Fikir</span>
+          </div>
+          <div class="reflection-card-text">${data.reflection || "读完这个故事，你学到了什么？"}</div>
+        </div>
+        <div class="ending-actions">
+          <button class="replay-btn" id="replayBtn">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M12 5V1L7 6l5 5V7c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6H4c0 4.42 3.58 8 8 8s8-3.58 8-8-3.58-8-8-8z"/></svg>
+            <span>再读一遍</span>
+          </button>
+        </div>
+      `;
+      bookMain.appendChild(endScene);
+      endScene.querySelector("#replayBtn").onclick = () => {
+        jumpTo(0);
+        playing = true;
+        playBtn.textContent = "暂停";
+      };
+    }
+
+    function jumpTo(idx) {
+      if (idx < 0) idx = 0;
+      if (idx >= totalPages) idx = totalPages - 1;
+      curPage = idx;
+      elapsed = 0;
+
+      // 切换视图激活状态
+      const scenes = bookMain.querySelectorAll(".page-scene");
+      scenes.forEach((sc, i) => sc.classList.toggle("active", i === curPage));
+
+      // 更新顶部进度分段条状态
+      const segs = trackGroup.querySelectorAll(".p-seg");
+      segs.forEach((seg, i) => {
+        const fill = seg.querySelector(".p-fill");
+        seg.classList.toggle("done", i < curPage);
+        if (i < curPage) {
+          fill.style.transform = "scaleX(1)";
+        } else if (i > curPage) {
+          fill.style.transform = "scaleX(0)";
+        }
+      });
+
+      // 更新页码文字
+      if (curPage === 0) {
+        pageIndicator.textContent = "封面";
+      } else if (curPage === totalPages - 1) {
+        pageIndicator.textContent = "启示";
+      } else {
+        pageIndicator.textContent = `${curPage} / ${totalPages - 2}`;
+      }
+    }
+
+    // 自动播放时钟
+    function tick(now) {
+      const dt = now - lastTime;
+      lastTime = now;
+
+      if (playing) {
+        elapsed += dt;
+        const dur = DURS[curPage] || 5000;
+        const ratio = Math.min(1, elapsed / dur);
+
+        // 当前页的进度条动态平滑延伸
+        const curSeg = trackGroup.children[curPage];
+        if (curSeg) {
+          const fill = curSeg.querySelector(".p-fill");
+          if (fill) fill.style.transform = `scaleX(${ratio})`;
+        }
+
+        // 走完当前页
+        if (elapsed >= dur) {
+          if (curPage < totalPages - 1) {
+            jumpTo(curPage + 1);
+          } else {
+            // 到达最后一页并播放完毕：绝不循环，自动稳稳停止
+            playing = false;
+            playBtn.textContent = "播放";
+            if (curSeg) {
+              const fill = curSeg.querySelector(".p-fill");
+              if (fill) fill.style.transform = "scaleX(1)";
+            }
+          }
+        }
+      }
+
+      requestAnimationFrame(tick);
+    }
+
+    // 控件交互绑定
+    playBtn.onclick = () => {
+      playing = !playing;
+      playBtn.textContent = playing ? "暂停" : "播放";
+    };
+    prevBtn.onclick = () => jumpTo(curPage - 1);
+    nextBtn.onclick = () => jumpTo(curPage + 1);
+
+    demoBtn.onclick = () => {
+      sampleIdx = (sampleIdx + 1) % SAMPLES.length;
+      story = SAMPLES[sampleIdx];
+      buildScenes(story);
+      jumpTo(0);
+      playing = true;
+      playBtn.textContent = "暂停";
+    };
+
+    // 键盘快捷键监听
+    window.addEventListener("keydown", (e) => {
+      if (e.key === "ArrowLeft") jumpTo(curPage - 1);
+      else if (e.key === "ArrowRight") jumpTo(curPage + 1);
+      else if (e.key === " ") {
+        e.preventDefault();
+        playing = !playing;
+        playBtn.textContent = playing ? "暂停" : "播放";
+      }
+    });
+
+    // 初始化渲染与启动
+    buildScenes(story);
+    jumpTo(0);
+    requestAnimationFrame(tick);
+  </script>
+</body>
+</html>

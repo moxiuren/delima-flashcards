@@ -1,0 +1,890 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>故事绘本 · 星夜剪纸剧场舞台风</title>
+  <style>
+    :root {
+      --night-deep: #080D1E;
+      --night-mid: #101838;
+      --night-card: #16214B;
+      --gold-bright: #F5D378;
+      --gold-primary: #DCAE42;
+      --gold-dim: #9E7924;
+      --gold-glow: rgba(245, 211, 120, 0.18);
+      --gold-border: rgba(220, 174, 66, 0.4);
+      --text-main: #FFF8E7;
+      --text-sub: #D5C7A5;
+      --text-muted: #8E856F;
+      --crimson-stage: #6E1820;
+      --serif: Georgia, "Noto Serif SC", "Songti SC", STSong, serif;
+      --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Microsoft YaHei", sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: #04070F;
+      font-family: var(--sans);
+      color: var(--text-main);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* 600x600 严格正方形舞台视口 */
+    .theater-stage {
+      width: 600px;
+      height: 600px;
+      position: relative;
+      background: radial-gradient(circle at 50% 30%, #172454 0%, #0C122B 65%, #060917 100%);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.65);
+      border: 1px solid rgba(220, 174, 66, 0.3);
+    }
+
+    /* 星夜微芒背景粒子 */
+    .star-twinkle {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      background-image: 
+        radial-gradient(1px 1px at 20px 30px, #FFF, rgba(0,0,0,0)),
+        radial-gradient(1.5px 1.5px at 120px 80px, #F5D378, rgba(0,0,0,0)),
+        radial-gradient(1px 1px at 240px 45px, #FFF, rgba(0,0,0,0)),
+        radial-gradient(1.5px 1.5px at 380px 70px, #F5D378, rgba(0,0,0,0)),
+        radial-gradient(1px 1px at 510px 35px, #FFF, rgba(0,0,0,0)),
+        radial-gradient(1px 1px at 80px 190px, #FFF, rgba(0,0,0,0)),
+        radial-gradient(1.5px 1.5px at 530px 160px, #F5D378, rgba(0,0,0,0)),
+        radial-gradient(1px 1px at 320px 140px, #FFF, rgba(0,0,0,0));
+      opacity: 0.65;
+      z-index: 1;
+    }
+
+    /* 舞台金色雕花外边框与内衬 */
+    .stage-arch-frame {
+      position: absolute;
+      inset: 6px;
+      border: 1px solid var(--gold-border);
+      pointer-events: none;
+      z-index: 2;
+    }
+    .stage-arch-frame::before {
+      content: "";
+      position: absolute;
+      inset: 4px;
+      border: 1px solid rgba(245, 211, 120, 0.15);
+    }
+
+    /* 顶部舞台吊幕饰帷 (SVG 剪纸造型) */
+    .curtain-top-decor {
+      position: absolute;
+      top: 6px;
+      left: 12px;
+      right: 12px;
+      height: 24px;
+      pointer-events: none;
+      z-index: 3;
+      display: flex;
+      justify-content: space-between;
+      color: var(--gold-primary);
+      opacity: 0.85;
+    }
+    .curtain-top-decor svg {
+      width: 100%;
+      height: 100%;
+      fill: currentColor;
+    }
+
+    /* 左右剧场帷幕柱剪影 */
+    .curtain-pillar {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      width: 14px;
+      pointer-events: none;
+      z-index: 3;
+      background: linear-gradient(to right, rgba(110, 24, 32, 0.4), transparent);
+    }
+    .curtain-pillar.left { left: 0; }
+    .curtain-pillar.right { right: 0; transform: scaleX(-1); }
+
+    /* 舞台顶栏 (高度 48px) */
+    .theater-header {
+      position: relative;
+      z-index: 10;
+      height: 48px;
+      padding: 12px 22px 4px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid rgba(220, 174, 66, 0.2);
+    }
+    .theater-tag {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      color: var(--gold-bright);
+      text-transform: uppercase;
+      text-shadow: 0 0 10px rgba(245, 211, 120, 0.4);
+    }
+    .theater-tag svg {
+      width: 15px;
+      height: 15px;
+      fill: currentColor;
+    }
+
+    /* 星轨分段进度条 */
+    .star-track-group {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex: 1;
+      max-width: 260px;
+      margin: 0 16px;
+    }
+    .s-seg {
+      flex: 1;
+      height: 4px;
+      background: rgba(220, 174, 66, 0.2);
+      border-radius: 2px;
+      overflow: hidden;
+      cursor: pointer;
+      position: relative;
+      transition: transform 0.2s, height 0.2s;
+    }
+    .s-seg:hover {
+      height: 6px;
+      background: rgba(220, 174, 66, 0.35);
+    }
+    .s-fill {
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, #DCAE42, #FFF2A8);
+      box-shadow: 0 0 8px #F5D378;
+      transform-origin: left center;
+      transform: scaleX(0);
+      transition: transform 0.08s linear;
+    }
+    .s-seg.done .s-fill {
+      transform: scaleX(1);
+    }
+
+    .theater-counter {
+      font-family: var(--serif);
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--gold-bright);
+      min-width: 48px;
+      text-align: right;
+      letter-spacing: 1px;
+    }
+
+    /* 主舞台区 */
+    .theater-main {
+      position: relative;
+      z-index: 5;
+      flex: 1;
+      overflow: hidden;
+      padding: 10px 24px 6px;
+      display: flex;
+    }
+
+    .act-scene {
+      position: absolute;
+      inset: 10px 24px 6px;
+      opacity: 0;
+      pointer-events: none;
+      transform: scale(0.96) translateY(8px);
+      transition: opacity 0.4s ease, transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+      display: flex;
+      flex-direction: column;
+    }
+    .act-scene.active {
+      opacity: 1;
+      pointer-events: auto;
+      transform: scale(1) translateY(0);
+    }
+
+    /* ===== PAGE 0: 封面剧目大招牌 ===== */
+    .cover-box {
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 10px 14px;
+    }
+    .cover-crest {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 3px 14px;
+      border: 1px solid var(--gold-primary);
+      border-radius: 20px;
+      background: rgba(220, 174, 66, 0.12);
+      font-size: 11px;
+      color: var(--gold-bright);
+      font-weight: 600;
+      letter-spacing: 1px;
+      margin-bottom: 14px;
+      box-shadow: 0 0 12px var(--gold-glow);
+    }
+    .cover-name {
+      font-family: var(--serif);
+      font-size: 32px;
+      font-weight: 700;
+      line-height: 1.25;
+      color: var(--gold-bright);
+      margin-bottom: 8px;
+      letter-spacing: 1.5px;
+      text-shadow: 0 2px 14px rgba(245, 211, 120, 0.35);
+      max-width: 480px;
+    }
+    .cover-desc {
+      font-family: var(--serif);
+      font-size: 14px;
+      color: var(--text-sub);
+      font-style: italic;
+      margin-bottom: 22px;
+      letter-spacing: 0.5px;
+      max-width: 460px;
+    }
+    .shadow-art-disc {
+      width: 136px;
+      height: 136px;
+      border-radius: 50%;
+      border: 1.5px solid var(--gold-border);
+      background: radial-gradient(circle, #24356E 0%, #131E42 75%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 24px;
+      box-shadow: 0 0 26px rgba(245, 211, 120, 0.22);
+      position: relative;
+    }
+    .shadow-art-disc svg {
+      width: 80px;
+      height: 80px;
+      fill: var(--gold-bright);
+      filter: drop-shadow(0 2px 8px rgba(0,0,0,0.6));
+    }
+    .curtain-open-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: linear-gradient(135deg, #E6BA4A, #9E7420);
+      color: #0B1024;
+      border: 1px solid #FFE699;
+      padding: 10px 28px;
+      border-radius: 24px;
+      font-size: 14px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      cursor: pointer;
+      box-shadow: 0 4px 18px rgba(230, 186, 74, 0.4);
+      transition: all 0.2s;
+    }
+    .curtain-open-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 22px rgba(230, 186, 74, 0.55);
+      background: linear-gradient(135deg, #F5CC62, #B3862A);
+    }
+
+    /* ===== PAGE 1..N: 故事幕次 ===== */
+    .story-act-view {
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+    }
+    .act-banner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 4px 0 10px;
+      border-bottom: 1px solid rgba(220, 174, 66, 0.25);
+      margin-bottom: 14px;
+    }
+    .act-tag-badge {
+      font-family: var(--serif);
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      color: var(--gold-bright);
+      text-transform: uppercase;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .act-caption-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-sub);
+    }
+
+    .shadow-box-container {
+      flex: 1;
+      background: linear-gradient(180deg, rgba(22, 33, 75, 0.75) 0%, rgba(13, 20, 48, 0.85) 100%);
+      border: 1.5px solid var(--gold-border);
+      border-radius: 10px;
+      padding: 22px 24px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35), inset 0 0 30px rgba(245, 211, 120, 0.04);
+      position: relative;
+    }
+    .shadow-box-container::before {
+      content: "☾";
+      position: absolute;
+      top: 10px;
+      right: 18px;
+      font-size: 26px;
+      color: rgba(245, 211, 120, 0.25);
+      pointer-events: none;
+    }
+    .act-cutout-icon {
+      width: 50px;
+      height: 50px;
+      margin: 0 auto 12px;
+      color: var(--gold-bright);
+      opacity: 0.9;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .act-cutout-icon svg {
+      width: 100%;
+      height: 100%;
+      fill: currentColor;
+      filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.5));
+    }
+    .story-act-text {
+      font-family: var(--serif);
+      font-size: 18px;
+      line-height: 1.8;
+      color: var(--text-main);
+      text-align: justify;
+      letter-spacing: 0.5px;
+      text-indent: 2em;
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+    }
+
+    /* ===== PAGE LAST: 寓意思考末页 ===== */
+    .curtain-call-view {
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .curtain-call-header {
+      text-align: center;
+      font-family: var(--serif);
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--gold-bright);
+      letter-spacing: 2px;
+      padding: 4px 0;
+      border-bottom: 1px dashed rgba(220, 174, 66, 0.3);
+    }
+
+    .wisdom-scroll {
+      background: linear-gradient(135deg, rgba(30, 44, 96, 0.8), rgba(18, 27, 62, 0.9));
+      border: 1.5px solid var(--gold-border);
+      border-radius: 8px;
+      padding: 16px 20px;
+      position: relative;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+    }
+    .scroll-heading {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--gold-bright);
+      letter-spacing: 0.5px;
+      margin-bottom: 8px;
+      text-transform: uppercase;
+    }
+    .scroll-body {
+      font-family: var(--serif);
+      font-size: 16px;
+      line-height: 1.6;
+      font-weight: 600;
+      color: #FFF2CE;
+    }
+
+    .question-dais {
+      background: rgba(18, 27, 62, 0.7);
+      border: 1px solid rgba(220, 174, 66, 0.25);
+      border-radius: 8px;
+      padding: 16px 20px;
+      position: relative;
+    }
+    .dais-heading {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--text-sub);
+      letter-spacing: 0.5px;
+      margin-bottom: 8px;
+      text-transform: uppercase;
+    }
+    .dais-body {
+      font-family: var(--serif);
+      font-size: 15px;
+      line-height: 1.6;
+      color: var(--text-main);
+    }
+
+    .curtain-replay-actions {
+      margin-top: auto;
+      display: flex;
+      justify-content: center;
+      padding-bottom: 4px;
+    }
+    .stage-replay-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: linear-gradient(135deg, #DCAE42, #9E7924);
+      color: #0A0F21;
+      border: 1px solid #FFE494;
+      padding: 10px 26px;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      cursor: pointer;
+      box-shadow: 0 4px 14px rgba(220, 174, 66, 0.35);
+      transition: all 0.2s;
+    }
+    .stage-replay-btn:hover {
+      background: linear-gradient(135deg, #EDC35D, #B88E30);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 18px rgba(220, 174, 66, 0.5);
+    }
+
+    /* 舞台底栏 (高度 46px) */
+    .theater-footer {
+      position: relative;
+      z-index: 10;
+      height: 46px;
+      padding: 4px 20px 8px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-top: 1px solid rgba(220, 174, 66, 0.2);
+    }
+    .nav-btn-cluster {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .theater-btn {
+      background: rgba(22, 33, 75, 0.85);
+      border: 1px solid var(--gold-border);
+      color: var(--text-sub);
+      padding: 5px 12px;
+      border-radius: 14px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      transition: all 0.18s;
+    }
+    .theater-btn:hover {
+      background: rgba(36, 53, 115, 0.95);
+      border-color: var(--gold-bright);
+      color: var(--gold-bright);
+    }
+    .theater-btn:active {
+      transform: scale(0.97);
+    }
+    .theater-btn.highlight {
+      background: rgba(220, 174, 66, 0.2);
+      border-color: var(--gold-bright);
+      color: var(--gold-bright);
+    }
+
+    .stage-tips {
+      font-size: 11px;
+      color: var(--text-muted);
+      letter-spacing: 0.5px;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="theater-stage" id="theaterStage">
+    <!-- 星夜微光与舞台景深 -->
+    <div class="star-twinkle"></div>
+    <div class="curtain-pillar left"></div>
+    <div class="curtain-pillar right"></div>
+
+    <!-- 舞台金色雕花框 -->
+    <div class="stage-arch-frame"></div>
+    <div class="curtain-top-decor">
+      <svg viewBox="0 0 576 24" preserveAspectRatio="none">
+        <path d="M0,0 L576,0 L576,8 C504,18 432,18 360,8 C288,18 216,18 144,8 C72,18 0,18 0,8 Z"/>
+      </svg>
+    </div>
+
+    <!-- 顶栏 -->
+    <header class="theater-header">
+      <div class="theater-tag">
+        <svg viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+        <span id="tSubject">一千零一夜</span>
+      </div>
+
+      <!-- 星轨分段进度条 -->
+      <div class="star-track-group" id="starTrack"></div>
+
+      <div class="theater-counter" id="theaterCounter">1 / 6</div>
+    </header>
+
+    <!-- 舞台中央幕次 (动态挂载) -->
+    <main class="theater-main" id="theaterMain"></main>
+
+    <!-- 舞台底栏控制条 -->
+    <footer class="theater-footer">
+      <div class="nav-btn-cluster">
+        <button class="theater-btn" id="tPrevBtn" title="上一幕 (←)">上一幕</button>
+        <button class="theater-btn highlight" id="tPlayBtn" title="暂停/播放 (空格)">暂停</button>
+        <button class="theater-btn" id="tNextBtn" title="下一幕 (→)">下一幕</button>
+      </div>
+
+      <div class="stage-tips">← → 翻幕 · 空格暂停</div>
+
+      <div class="nav-btn-cluster">
+        <button class="theater-btn" id="tDemoBtn">切换剧目</button>
+      </div>
+    </footer>
+  </div>
+
+  <script>
+    // 经典内置剧目样本 (安徒生童话 + 一千零一夜)
+    const THEATER_SAMPLES = [
+      {
+        type: "story",
+        id: "story_1001_001",
+        subject: "Cerita Rakyat · 一千零一夜",
+        collection: "一千零一夜",
+        title: "阿拉丁与神灯",
+        subtitle: "Aladdin and the Magic Lamp · Lampu Ajaib",
+        pages: [
+          {
+            caption: "第一幕 · 幽深宝库",
+            text: "贫穷而善良的少年阿拉丁，被居心叵测的魔法师诱骗到了古老神秘的地下洞窟，命他取回一盏毫不起眼的旧铜油灯，随后却将他封闭在幽暗的石门中。"
+          },
+          {
+            caption: "第二幕 · 神灯显灵",
+            text: "在冰冷绝望的黑暗中，阿拉丁无意间擦了擦手中的铜油灯。霎时间青烟翻滚，一位威风凛凛的蓝色灯神破空浮现，恭敬地向他行礼，尊他为唯一的主人。"
+          },
+          {
+            caption: "第三幕 · 智慧较量",
+            text: "在灯神的奇迹相助下，阿拉丁解救了受困的百姓，并与美丽的公主结下良缘。然而狡猾的魔法师乔装改扮，以新灯换旧灯的诡计骗走了神灯并掠走王宫。"
+          },
+          {
+            caption: "第四幕 · 破雾凯旋",
+            text: "阿拉丁毫不退缩，以非凡的胆识潜入城堡智斗魔法师，终于夺回神灯。他许下心愿驱散了灾厄，让王城再度迎来了繁华安宁的星夜与晨曦。"
+          }
+        ],
+        moral: "奇迹或许能改变处境，但唯有真诚的善心与无畏的勇气，能守护一生的幸福。",
+        reflection: "假如神灯精灵愿意为你达成一个造福他人的心愿，你会选择什么？"
+      },
+      {
+        type: "story",
+        id: "story_andersen_001",
+        subject: "Cerita Klasik · 安徒生童话",
+        collection: "安徒生童话",
+        title: "卖火柴的小女孩",
+        subtitle: "The Little Match Girl · Gadis Penjual Mancis",
+        pages: [
+          {
+            caption: "第一幕 · 寒冬除夕夜",
+            text: "雪花在漆黑的除夕夜无声坠落，瘦弱的小女孩光着脚在积雪的街头徘徊。她紧紧攥着一把尚未卖出的火柴，寒风刺骨，没有一个人停下脚步看她一眼。"
+          },
+          {
+            caption: "第二幕 · 第一根火柴",
+            text: "她颤抖地擦燃了第一根火柴。嗤！金红色的火焰宛若温馨的铁炉，散发出令人眷恋的暖流，驱散了周围彻骨的严寒，带来刹那间的美好安慰。"
+          },
+          {
+            caption: "第三幕 · 梦幻的盛宴",
+            text: "第二根与第三根火柴相继被点燃。她看见了烤得金黄流油的肥鹅向她走来，看见了挂满闪烁烛光与彩饰的圣诞树，仿佛置身于璀璨无瑕的仙境。"
+          },
+          {
+            caption: "第四幕 · 慈祥的怀抱",
+            text: "在最后一片最温暖、最柔和的光晕中，最疼爱她的奶奶微笑着张开双臂。小女孩依偎在奶奶温暖的怀抱里，轻盈地飞向了没有严寒与忧伤的世界。"
+          }
+        ],
+        moral: "珍惜身边的每一点温饱与关爱，用善意去温暖世间每一个需要帮助的心灵。",
+        reflection: "在寒冷的冬日里，你可以做些什么微小的事情，来温暖周围的人？"
+      }
+    ];
+
+    // URL 安全 Base64 UTF-8 数据解析
+    function parseStoryParam() {
+      try {
+        const raw = new URLSearchParams(location.search).get("d");
+        if (!raw) return THEATER_SAMPLES[0];
+        const bin = atob(raw.replace(/-/g, "+").replace(/_/g, "/"));
+        const str = new TextDecoder().decode(Uint8Array.from(bin, c => c.charCodeAt(0)));
+        const data = JSON.parse(str);
+        if (data && data.pages && Array.isArray(data.pages)) {
+          return { ...THEATER_SAMPLES[0], ...data };
+        }
+        return THEATER_SAMPLES[0];
+      } catch (e) {
+        console.warn("数据参数解析异常，使用默认剧目:", e);
+        return THEATER_SAMPLES[0];
+      }
+    }
+
+    let drama = parseStoryParam();
+    let dramaIdx = 0;
+    let curAct = 0;
+    let actCount = 0;
+    let timeElapsed = 0;
+    let isPlaying = true;
+    let lastStamp = performance.now();
+    let ACT_DURS = [];
+
+    const theaterMain = document.getElementById("theaterMain");
+    const starTrack = document.getElementById("starTrack");
+    const theaterCounter = document.getElementById("theaterCounter");
+    const tSubject = document.getElementById("tSubject");
+    const tPlayBtn = document.getElementById("tPlayBtn");
+    const tPrevBtn = document.getElementById("tPrevBtn");
+    const tNextBtn = document.getElementById("tNextBtn");
+    const tDemoBtn = document.getElementById("tDemoBtn");
+
+    // 舞台剪影小矢量图标 (SVG)
+    const THEATER_ICONS = [
+      `<svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>`,
+      `<svg viewBox="0 0 24 24"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/></svg>`,
+      `<svg viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>`,
+      `<svg viewBox="0 0 24 24"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg>`
+    ];
+
+    function renderTheater(data) {
+      theaterMain.innerHTML = "";
+      starTrack.innerHTML = "";
+      ACT_DURS = [];
+
+      tSubject.textContent = data.collection || data.subject || "剧场故事";
+
+      const pagesLen = (data.pages ? data.pages.length : 0);
+      actCount = 1 + pagesLen + 1; // 封面 + N幕 + 结语
+
+      // 1. 顶部星轨分段条
+      for (let i = 0; i < actCount; i++) {
+        const seg = document.createElement("div");
+        seg.className = "s-seg";
+        seg.dataset.act = i;
+        const fill = document.createElement("div");
+        fill.className = "s-fill";
+        seg.appendChild(fill);
+        seg.onclick = () => showAct(i);
+        starTrack.appendChild(seg);
+
+        if (i === 0) {
+          ACT_DURS.push(3600);
+        } else if (i <= pagesLen) {
+          const txtLen = (data.pages[i - 1].text || "").length;
+          ACT_DURS.push(Math.max(4600, Math.min(6200, txtLen * 78)));
+        } else {
+          ACT_DURS.push(6500);
+        }
+      }
+
+      // 2. 封面幕
+      const coverScene = document.createElement("div");
+      coverScene.className = "act-scene cover-box";
+      coverScene.innerHTML = `
+        <div class="cover-crest">${data.subject || "世界经典剧场"}</div>
+        <h1 class="cover-name">${data.title || "神秘传说"}</h1>
+        <div class="cover-desc">${data.subtitle || ""}</div>
+        <div class="shadow-art-disc">
+          <svg viewBox="0 0 24 24">
+            <path d="M12 3c-4.97 0-9 4.03-9 9 0 2.12.74 4.07 1.97 5.61L4.35 19.4c-.39.39-.39 1.02 0 1.41.39.39 1.02.39 1.41 0l1.9-1.9C9.22 19.59 10.56 20 12 20c4.97 0 9-4.03 9-9s-4.03-9-9-9zm0 15c-3.31 0-6-2.69-6-6s2.69-6 6-6 6 2.69 6 6-2.69 6-6 6z"/>
+          </svg>
+        </div>
+        <button class="curtain-open-btn" id="openCurtainBtn">
+          <span>大幕拉开</span>
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+        </button>
+      `;
+      theaterMain.appendChild(coverScene);
+      coverScene.querySelector("#openCurtainBtn").onclick = () => showAct(1);
+
+      // 3. 剧情各幕
+      (data.pages || []).forEach((pg, i) => {
+        const scene = document.createElement("div");
+        scene.className = "act-scene story-act-view";
+        const iconSvg = THEATER_ICONS[i % THEATER_ICONS.length];
+        scene.innerHTML = `
+          <div class="act-banner">
+            <div class="act-tag-badge">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+              <span>第 ${i + 1} 幕 / 共 ${pagesLen} 幕</span>
+            </div>
+            <div class="act-caption-title">${pg.caption || `第 ${i + 1} 幕`}</div>
+          </div>
+          <div class="shadow-box-container">
+            <div class="act-cutout-icon">${iconSvg}</div>
+            <p class="story-act-text">${pg.text || ""}</p>
+          </div>
+        `;
+        theaterMain.appendChild(scene);
+      });
+
+      // 4. 谢幕与哲思末页
+      const endScene = document.createElement("div");
+      endScene.className = "act-scene curtain-call-view";
+      endScene.innerHTML = `
+        <div class="curtain-call-header">✦ 剧目谢幕 · 智慧与余音 ✦</div>
+        <div class="wisdom-scroll">
+          <div class="scroll-heading">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>
+            <span>故事寓意 · Pengajaran</span>
+          </div>
+          <div class="scroll-body">${data.moral || "真诚、善意与坚韧是穿透黑暗的光芒。"}</div>
+        </div>
+        <div class="question-dais">
+          <div class="dais-heading">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M9 21c0 .55.45 1 1 1h4c.55 0 1-.45 1-1v-1H9v1zm3-19C8.14 2 5 5.14 5 9c0 2.38 1.19 4.47 3 5.74V17c0 .55.45 1 1 1h6c.55 0 1-.45 1-1v-2.26c1.81-1.27 3-3.36 3-5.74 0-3.86-3.14-7-7-7z"/></svg>
+            <span>夜思问答 · Soalan Fikir</span>
+          </div>
+          <div class="dais-body">${data.reflection || "听完这段传奇，你有怎样的启发？"}</div>
+        </div>
+        <div class="curtain-replay-actions">
+          <button class="stage-replay-btn" id="stageReplayBtn">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M12 5V1L7 6l5 5V7c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6H4c0 4.42 3.58 8 8 8s8-3.58 8-8-3.58-8-8-8z"/></svg>
+            <span>重温剧目</span>
+          </button>
+        </div>
+      `;
+      theaterMain.appendChild(endScene);
+      endScene.querySelector("#stageReplayBtn").onclick = () => {
+        showAct(0);
+        isPlaying = true;
+        tPlayBtn.textContent = "暂停";
+      };
+    }
+
+    function showAct(idx) {
+      if (idx < 0) idx = 0;
+      if (idx >= actCount) idx = actCount - 1;
+      curAct = idx;
+      timeElapsed = 0;
+
+      const scenes = theaterMain.querySelectorAll(".act-scene");
+      scenes.forEach((sc, i) => sc.classList.toggle("active", i === curAct));
+
+      const segs = starTrack.querySelectorAll(".s-seg");
+      segs.forEach((seg, i) => {
+        const fill = seg.querySelector(".s-fill");
+        seg.classList.toggle("done", i < curAct);
+        if (i < curAct) {
+          fill.style.transform = "scaleX(1)";
+        } else if (i > curAct) {
+          fill.style.transform = "scaleX(0)";
+        }
+      });
+
+      if (curAct === 0) {
+        theaterCounter.textContent = "启幕";
+      } else if (curAct === actCount - 1) {
+        theaterCounter.textContent = "谢幕";
+      } else {
+        theaterCounter.textContent = `${curAct} / ${actCount - 2}`;
+      }
+    }
+
+    function theaterTick(now) {
+      const dt = now - lastStamp;
+      lastStamp = now;
+
+      if (isPlaying) {
+        timeElapsed += dt;
+        const dur = ACT_DURS[curAct] || 5000;
+        const ratio = Math.min(1, timeElapsed / dur);
+
+        const currentSeg = starTrack.children[curAct];
+        if (currentSeg) {
+          const fill = currentSeg.querySelector(".s-fill");
+          if (fill) fill.style.transform = `scaleX(${ratio})`;
+        }
+
+        if (timeElapsed >= dur) {
+          if (curAct < actCount - 1) {
+            showAct(curAct + 1);
+          } else {
+            // 达到末页走完：自动停止，绝不循环
+            isPlaying = false;
+            tPlayBtn.textContent = "播放";
+            if (currentSeg) {
+              const fill = currentSeg.querySelector(".s-fill");
+              if (fill) fill.style.transform = "scaleX(1)";
+            }
+          }
+        }
+      }
+
+      requestAnimationFrame(theaterTick);
+    }
+
+    tPlayBtn.onclick = () => {
+      isPlaying = !isPlaying;
+      tPlayBtn.textContent = isPlaying ? "暂停" : "播放";
+    };
+    tPrevBtn.onclick = () => showAct(curAct - 1);
+    tNextBtn.onclick = () => showAct(curAct + 1);
+
+    tDemoBtn.onclick = () => {
+      dramaIdx = (dramaIdx + 1) % THEATER_SAMPLES.length;
+      drama = THEATER_SAMPLES[dramaIdx];
+      renderTheater(drama);
+      showAct(0);
+      isPlaying = true;
+      tPlayBtn.textContent = "暂停";
+    };
+
+    window.addEventListener("keydown", (e) => {
+      if (e.key === "ArrowLeft") showAct(curAct - 1);
+      else if (e.key === "ArrowRight") showAct(curAct + 1);
+      else if (e.key === " ") {
+        e.preventDefault();
+        isPlaying = !isPlaying;
+        tPlayBtn.textContent = isPlaying ? "暂停" : "播放";
+      }
+    });
+
+    renderTheater(drama);
+    showAct(0);
+    requestAnimationFrame(theaterTick);
+  </script>
+</body>
+</html>
