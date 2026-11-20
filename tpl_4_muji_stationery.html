@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>模板 04 · 日系无印方格手账风 (MUJI Notebook)</title>
+  <style>
+    :root {
+      --paper: #FAF8F3;
+      --grid-line: rgba(145, 138, 122, 0.14);
+      --kraft: #EAE0CE;
+      --ink: #2A2927;
+      --muted: #767167;
+      --matcha: #537351;
+      --matcha-soft: #E8F0E6;
+      --red-pen: #C44636;
+      --marker: rgba(246, 224, 128, 0.65);
+      --sans: "Segoe UI", system-ui, "PingFang SC", "Microsoft YaHei", sans-serif;
+    }
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden;
+      background: #E9E4D8; font-family: var(--sans); color: var(--ink);
+      display: flex; align-items: center; justify-content: center;
+    }
+    .stage { width: min(100vw, 100vh, 620px); height: min(100vw, 100vh, 620px); aspect-ratio: 1 / 1; padding: 14px; }
+    .notebook {
+      position: relative; width: 100%; height: 100%;
+      background-color: var(--paper);
+      background-image:
+        linear-gradient(var(--grid-line) 1px, transparent 1px),
+        linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
+      background-size: 20px 20px;
+      border: 1px solid #C9C1B0; border-radius: 10px 18px 18px 10px;
+      box-shadow: -5px 0 0 #D8CEBC, 0 12px 28px rgba(42, 41, 39, 0.09);
+      padding: 18px 20px 14px 26px;
+      display: flex; flex-direction: column; overflow: hidden;
+    }
+    /* 左侧装订线红边线 */
+    .notebook::before {
+      content: ""; position: absolute; top: 0; bottom: 0; left: 16px;
+      width: 1px; background: rgba(196, 70, 54, 0.25); pointer-events: none;
+    }
+
+    .prog-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 12px; flex-shrink: 0; }
+    .prog-track { height: 4px; background: rgba(42, 41, 39, 0.1); border-radius: 2px; overflow: hidden; cursor: pointer; }
+    .prog-fill { width: 100%; height: 100%; background: var(--matcha); transform-origin: left; transform: scaleX(0); }
+    .prog-track.done .prog-fill { transform: scaleX(1); }
+
+    .hdr { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #DCD4C2; padding-bottom: 9px; margin-bottom: 12px; flex-shrink: 0; }
+    .tab-row { display: flex; align-items: center; gap: 8px; min-width: 0; }
+    .kraft-tab {
+      background: var(--kraft); color: var(--ink); font-size: 12px; font-weight: 700;
+      padding: 4px 10px; border-radius: 4px; border: 1px solid #D3C5AC; white-space: nowrap;
+    }
+    .unit-lbl { font-size: 12px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .ctrls { display: flex; gap: 4px; flex-shrink: 0; }
+    .btn {
+      height: 28px; padding: 0 9px; border: 1px solid #C9C1B0; border-radius: 6px;
+      background: rgba(255, 255, 255, 0.85); color: var(--ink); font-size: 12px; font-weight: 600; cursor: pointer;
+    }
+    .btn:hover { background: var(--kraft); }
+
+    .viewport { position: relative; flex: 1; min-height: 0; }
+    .scene {
+      position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: center;
+      opacity: 0; transform: translateY(12px); pointer-events: none;
+      transition: opacity 0.42s ease, transform 0.48s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+    .scene.active { opacity: 1; transform: translateY(0); pointer-events: auto; }
+
+    /* 第 1 幕：手账重点页 */
+    .note-hero {
+      height: 100%; background: rgba(255, 255, 255, 0.72); border: 1px solid #DCD4C2; border-radius: 10px;
+      padding: 24px 22px; display: flex; flex-direction: column; justify-content: center; gap: 14px;
+    }
+    .note-badge { font-size: 11.5px; font-weight: 700; color: var(--matcha); letter-spacing: 0.8px; }
+    .note-word {
+      font-size: clamp(32px, 7vw, 42px); font-weight: 800; margin: 0; color: var(--ink);
+      display: inline-block; align-self: flex-start;
+      background: linear-gradient(transparent 58%, var(--marker) 58%);
+      padding: 0 6px;
+    }
+    .note-mean { font-size: 16px; line-height: 1.55; color: var(--ink); margin: 0; font-weight: 500; }
+    .check-ul { list-style: none; padding: 0; margin: 4px 0 0; display: flex; flex-direction: column; gap: 9px; }
+    .check-ul li {
+      font-size: 14px; font-weight: 600; padding: 9px 12px; background: var(--paper);
+      border: 1px solid #E2D9C6; border-radius: 6px; display: flex; align-items: center; gap: 9px;
+      opacity: 0; transform: translateX(-12px);
+      transition: opacity 0.38s ease, transform 0.42s ease;
+    }
+    .check-ul li::before {
+      content: "✓"; width: 18px; height: 18px; border-radius: 50%; background: var(--matcha-soft);
+      color: var(--matcha); font-size: 11px; font-weight: 800; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;
+    }
+    .scene.active .check-ul li:nth-child(1) { transition-delay: 0.15s; opacity: 1; transform: none; }
+    .scene.active .check-ul li:nth-child(2) { transition-delay: 0.32s; opacity: 1; transform: none; }
+    .scene.active .check-ul li:nth-child(3) { transition-delay: 0.49s; opacity: 1; transform: none; }
+
+    /* 第 2 幕：左右对照错题本 */
+    .note-vs { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; height: 100%; max-height: 360px; }
+    .n-col {
+      background: rgba(255, 255, 255, 0.78); border: 1px solid #D7CEBA; border-radius: 8px;
+      padding: 16px 14px; display: flex; flex-direction: column; justify-content: space-between;
+      opacity: 0; transform: translateY(12px); transition: opacity 0.45s ease, transform 0.45s ease;
+    }
+    .n-col.right { transition-delay: 0.16s; }
+    .scene.active .n-col { opacity: 1; transform: none; }
+    .n-tag { display: inline-block; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 4px; margin-bottom: 6px; }
+    .n-col.left .n-tag { background: var(--matcha-soft); color: var(--matcha); }
+    .n-col.right .n-tag { background: #F9E5E2; color: var(--red-pen); }
+    .n-h { font-size: 21px; font-weight: 800; margin: 0 0 6px; }
+    .n-d { font-size: 12.5px; color: var(--muted); margin: 0 0 12px; line-height: 1.5; }
+    .n-ul { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 6px; }
+    .n-ul li { font-size: 13px; padding: 7px 9px; background: var(--paper); border-bottom: 1px dashed #D8CEBA; font-weight: 600; }
+
+    /* 第 3 幕：红笔手绘圆圈批注 */
+    .note-sent {
+      background: rgba(255, 255, 255, 0.8); border: 1px solid #D7CEBA; border-radius: 8px;
+      padding: 24px 22px; height: 100%; max-height: 360px; display: flex; flex-direction: column; justify-content: center; gap: 16px;
+    }
+    .ns-p { font-size: clamp(19px, 3.6vw, 22px); line-height: 1.8; margin: 0; font-weight: 600; }
+    .red-circle-wrap {
+      position: relative; display: inline-block; padding: 0 8px; font-weight: 800; color: var(--red-pen);
+    }
+    .red-circle-svg {
+      position: absolute; left: -4px; top: -4px; width: calc(100% + 8px); height: calc(100% + 8px);
+      pointer-events: none; overflow: visible;
+    }
+    .red-circle-svg ellipse {
+      fill: none; stroke: var(--red-pen); stroke-width: 2.2; stroke-linecap: round;
+      stroke-dasharray: 360; stroke-dashoffset: 360;
+      transition: stroke-dashoffset 0.9s cubic-bezier(0.22, 1, 0.36, 1) 0.35s;
+    }
+    .scene.active .red-circle-svg ellipse { stroke-dashoffset: 0; }
+    .ns-zh { font-size: 14px; color: var(--muted); margin: 0; padding-left: 10px; border-left: 3px solid var(--matcha); }
+    .ns-tip { background: var(--kraft); border-radius: 6px; padding: 12px 14px; font-size: 13.5px; font-weight: 600; line-height: 1.55; }
+
+    /* 第 4 幕：折角便签揭晓 */
+    .note-quiz {
+      position: relative; height: 100%; background: rgba(255, 255, 255, 0.82); border: 1px solid #D7CEBA; border-radius: 8px;
+      padding: 20px; display: flex; flex-direction: column; justify-content: space-between; overflow: hidden;
+    }
+    .nq-q { font-size: 17.5px; font-weight: 700; line-height: 1.5; margin: 6px 0 12px; }
+    .nq-opts { display: flex; flex-direction: column; gap: 8px; }
+    .nopt {
+      min-height: 45px; padding: 10px 14px; border: 1px solid #D5CCB8; border-radius: 6px;
+      background: var(--paper); font-size: 14.5px; font-weight: 600; text-align: left; cursor: pointer;
+      display: flex; justify-content: space-between; align-items: center;
+      transition: background-color 0.15s ease;
+    }
+    .nopt:hover { background: var(--kraft); }
+    .nopt.ok { background: var(--matcha-soft); border-color: var(--matcha); color: var(--matcha); }
+    .nopt.no { background: #F9E5E2; border-color: var(--red-pen); color: var(--red-pen); }
+
+    .sticky-note {
+      position: absolute; inset: 0; background: #FFF8DC; border: 1px solid #E5D49B;
+      padding: 24px; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; gap: 14px;
+      transform-origin: bottom right;
+      clip-path: polygon(100% 100%, 100% 100%, 100% 100%);
+      transition: clip-path 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+      z-index: 5;
+    }
+    .sticky-note.open { clip-path: polygon(-40% 0, 100% 0, 100% 100%, 0 140%); }
+    .sn-ans { font-size: 30px; font-weight: 800; color: var(--matcha); margin: 0; }
+    .sn-exp { font-size: 14.5px; line-height: 1.6; max-width: 90%; margin: 0; color: var(--ink); }
+
+    .ftr { display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #DCD4C2; padding-top: 8px; margin-top: 10px; font-size: 11.5px; color: var(--muted); flex-shrink: 0; }
+  </style>
+</head>
+<body>
+  <main class="stage">
+    <section class="notebook" aria-label="日系方格手账闪卡">
+      <div class="prog-row">
+        <div class="prog-track" data-s="0"><div class="prog-fill"></div></div>
+        <div class="prog-track" data-s="1"><div class="prog-fill"></div></div>
+        <div class="prog-track" data-s="2"><div class="prog-fill"></div></div>
+        <div class="prog-track" data-s="3"><div class="prog-fill"></div></div>
+      </div>
+
+      <header class="hdr">
+        <div class="tab-row">
+          <span class="kraft-tab" id="uSubj"></span>
+          <span class="unit-lbl" id="uUnit"></span>
+        </div>
+        <div class="ctrls">
+          <button class="btn" id="prevBtn" type="button">&lt;</button>
+          <button class="btn" id="playBtn" type="button">暂停</button>
+          <button class="btn" id="nextBtn" type="button">&gt;</button>
+        </div>
+      </header>
+
+      <div class="viewport">
+        <article class="scene active" data-s="0">
+          <div class="note-hero">
+            <div class="note-badge">NOTE 01 · 核心重点笔记</div>
+            <h1 class="note-word" id="uWord"></h1>
+            <p class="note-mean" id="uMean"></p>
+            <ul class="check-ul" id="uChips"></ul>
+          </div>
+        </article>
+
+        <article class="scene" data-s="1">
+          <div class="note-vs">
+            <div class="n-col left">
+              <div><span class="n-tag">要点 A</span><h2 class="n-h" id="uLTerm"></h2><p class="n-d" id="uLDesc"></p></div>
+              <ul class="n-ul" id="uLList"></ul>
+            </div>
+            <div class="n-col right">
+              <div><span class="n-tag">易混 B</span><h2 class="n-h" id="uRTerm"></h2><p class="n-d" id="uRDesc"></p></div>
+              <ul class="n-ul" id="uRList"></ul>
+            </div>
+          </div>
+        </article>
+
+        <article class="scene" data-s="2">
+          <div class="note-sent">
+            <div class="note-badge">NOTE 03 · 红笔圈注例句</div>
+            <p class="ns-p" id="uSent"></p>
+            <p class="ns-zh" id="uTrans"></p>
+            <div class="ns-tip" id="uTip"></div>
+          </div>
+        </article>
+
+        <article class="scene" data-s="3">
+          <div class="note-quiz">
+            <div>
+              <div class="note-badge">NOTE 04 · 考前自测</div>
+              <div class="nq-q" id="uQ"></div>
+              <div class="nq-opts" id="uOpts"></div>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:center">
+              <span style="font-size:12px;color:var(--muted)">4 秒后折角便签掀开答案</span>
+              <button class="btn" id="revealBtn" type="button">掀开便签</button>
+            </div>
+            <div class="sticky-note" id="sticky">
+              <div class="note-badge">MEMO · 解答便签</div>
+              <p class="sn-ans" id="uAns"></p>
+              <p class="sn-exp" id="uExp"></p>
+              <button class="btn" id="replayBtn" type="button">翻回第 1 页</button>
+            </div>
+          </div>
+        </article>
+      </div>
+
+      <footer class="ftr">
+        <button class="btn" id="demoBtn" type="button" style="height:24px;font-size:11px">切换笔记本页 (1/3)</button>
+        <span id="uStage">Page 1 / 4</span>
+      </footer>
+    </section>
+  </main>
+
+  <script>
+    const SAMPLES = [
+      {
+        subject: "Bahasa Cina · 华文", unit: "形近字整理", word: "燥 vs 躁",
+        meaning: "偏旁决定意思：火字旁表缺水干燥；足字旁表发脾气跺脚",
+        chips: ["干燥 gān zào（空气干）", "急躁 jí zào（脾气急）", "枯燥 kū zào（乏味）"],
+        compare: {
+          left: { term: "燥（火）", desc: "没有水分、闷热干燥", items: ["干燥的气候", "燥热的午后", "枯燥的课文"] },
+          right: { term: "躁（足）", desc: "坐立不安、脾气急躁", items: ["急躁地催促", "心里很烦躁", "戒骄戒躁"] }
+        },
+        sentenceBefore: "遇到难题时不要", sentenceHighlight: "急躁", sentenceAfter: "，先深呼吸再仔细检查一遍。",
+        translation: "手账批注：火（燥）怕干，足（躁）会跳。",
+        tip: "错题本口诀：天气干热用「燥」，心情急得直跺脚用「躁」！",
+        quiz: { question: "最近天气十分干（ ），同学们记得多喝温水。", options: ["A. 躁", "B. 燥", "C. 澡"], answerIndex: 1, answerText: "B. 燥（干燥）", explain: "天气没有湿度、水分少，与火/热量相关，故用火字旁的「燥」。" }
+      },
+      {
+        subject: "Bahasa Melayu", unit: "Penjodoh Bilangan", word: "seutas",
+        meaning: "一条 / 一串（专用于细长、柔软或可弯曲佩戴的物品）",
+        chips: ["seutas jam tangan 手表", "seutas rantai 项链", "seutas tali 绳子"],
+        compare: {
+          left: { term: "seutas", desc: "柔软可绕成圈的长物", items: ["jam tangan 手表", "rantai 项链", "tali pinggang 腰带"] },
+          right: { term: "sebatang", desc: "偏硬直立的棒状物品", items: ["pensel 铅笔", "pokok 树木", "sungai 河流"] }
+        },
+        sentenceBefore: "Ibu memakai ", sentenceHighlight: "seutas", sentenceAfter: " rantai emas yang cantik ke majlis itu.",
+        translation: "妈妈戴着一条漂亮的金项链去参加那个宴会。",
+        tip: "易混辨析：铅笔/木棒硬邦邦用 sebatang，手表/绳子软绵绵用 seutas。",
+        quiz: { question: "Ayah membeli _____ tali nilon untuk mengikat kotak itu.", options: ["A. sebatang", "B. seutas", "C. sebiji"], answerIndex: 1, answerText: "B. seutas", explain: "tali nilon（尼龙绳）细长柔软可卷绕，量词选 seutas。" }
+      },
+      {
+        subject: "Pendidikan Moral", unit: "18 Nilai Murni", word: "Kerajinan",
+        meaning: "勤勉：在面对任何任务时都付出持续且认真的努力",
+        chips: ["Bersungguh-sungguh 认真", "Berdedikasi 专注投入", "Tidak mudah putus asa 不轻言放弃"],
+        compare: {
+          left: { term: "正确表现", desc: "日常勤勉行为指标", items: ["按时复习功课", "主动完成练习题", "遇到难题反复钻研"] },
+          right: { term: "常见混淆", desc: "与其他 Nilai 区分", items: ["Kerajinan ≠ Hemah Tinggi(礼貌)", "Kerajinan ≠ Kejujuran(诚实)", "关键词看努力与坚持"] }
+        },
+        sentenceBefore: "Sikap ", sentenceHighlight: "kerajinan", sentenceAfter: " Ali membolehkannya lulus dengan cemerlang.",
+        translation: "阿里勤勉的学习态度使他取得了优异的成绩。",
+        tip: "Moral 答题技巧：题目出现 setiap hari mengulang kaji / berusaha gigih，必选 Kerajinan！",
+        quiz: { question: "Mei Ling berlatih bermain piano setiap hari sehingga mahir. Nilai apakah ini?", options: ["A. Kerajinan", "B. Kesederhanaan", "C. Keberanian"], answerIndex: 0, answerText: "A. Kerajinan（勤勉）", explain: "每天坚持练习直到熟练，对应价值观 Kerajinan。" }
+      }
+    ];
+
+    function loadCard() {
+      try {
+        const raw = new URLSearchParams(location.search).get("d");
+        if (!raw) return SAMPLES[0];
+        const bin = atob(raw.replace(/-/g, "+").replace(/_/g, "/"));
+        return { ...SAMPLES[0], ...JSON.parse(new TextDecoder().decode(Uint8Array.from(bin, c => c.charCodeAt(0)))) };
+      } catch { return SAMPLES[0]; }
+    }
+
+    let idx = 0, card = loadCard(), cur = 0, elapsed = 0, playing = true, open = false, last = performance.now();
+    const DURS = [4200, 4600, 4600, 7000];
+    const scenes = [...document.querySelectorAll(".scene")];
+    const tracks = [...document.querySelectorAll(".prog-track")];
+    const fills = tracks.map(t => t.querySelector(".prog-fill"));
+    const sticky = document.getElementById("sticky");
+
+    function render(c) {
+      document.getElementById("uSubj").textContent = c.subject;
+      document.getElementById("uUnit").textContent = c.unit;
+      document.getElementById("uWord").textContent = c.word;
+      document.getElementById("uMean").textContent = c.meaning;
+      const ch = document.getElementById("uChips"); ch.innerHTML = "";
+      c.chips.forEach(t => { const li = document.createElement("li"); li.textContent = t; ch.appendChild(li); });
+      document.getElementById("uLTerm").textContent = c.compare.left.term;
+      document.getElementById("uLDesc").textContent = c.compare.left.desc;
+      const ul = document.getElementById("uLList"); ul.innerHTML = "";
+      c.compare.left.items.forEach(t => { const li = document.createElement("li"); li.textContent = t; ul.appendChild(li); });
+      document.getElementById("uRTerm").textContent = c.compare.right.term;
+      document.getElementById("uRDesc").textContent = c.compare.right.desc;
+      const ur = document.getElementById("uRList"); ur.innerHTML = "";
+      c.compare.right.items.forEach(t => { const li = document.createElement("li"); li.textContent = t; ur.appendChild(li); });
+
+      const se = document.getElementById("uSent"); se.innerHTML = "";
+      se.appendChild(document.createTextNode(c.sentenceBefore));
+      const wrap = document.createElement("span"); wrap.className = "red-circle-wrap";
+      wrap.appendChild(document.createTextNode(c.sentenceHighlight));
+      wrap.insertAdjacentHTML("beforeend", `<svg class="red-circle-svg" viewBox="0 0 100 40" preserveAspectRatio="none"><ellipse cx="50" cy="20" rx="48" ry="17"/></svg>`);
+      se.appendChild(wrap);
+      se.appendChild(document.createTextNode(c.sentenceAfter));
+
+      document.getElementById("uTrans").textContent = c.translation;
+      document.getElementById("uTip").textContent = c.tip;
+      document.getElementById("uQ").textContent = c.quiz.question;
+      document.getElementById("uAns").textContent = c.quiz.answerText;
+      document.getElementById("uExp").textContent = c.quiz.explain;
+      const op = document.getElementById("uOpts"); op.innerHTML = "";
+      c.quiz.options.forEach((o, i) => {
+        const b = document.createElement("button"); b.type = "button"; b.className = "nopt";
+        b.innerHTML = "<span></span><span></span>"; b.firstChild.textContent = o;
+        b.onclick = () => {
+          const ok = i === c.quiz.answerIndex;
+          b.classList.add(ok ? "ok" : "no"); b.lastChild.textContent = ok ? "✓" : "×";
+          if (ok) setTimeout(() => { open = true; sticky.classList.add("open"); }, 420);
+        };
+        op.appendChild(b);
+      });
+    }
+
+    function go(n) {
+      cur = (n + 4) % 4; elapsed = 0; open = false; sticky.classList.remove("open");
+      scenes.forEach((s, i) => s.classList.toggle("active", i === cur));
+      tracks.forEach((t, i) => { t.classList.toggle("done", i < cur); fills[i].style.transform = i < cur ? "scaleX(1)" : "scaleX(0)"; });
+      document.getElementById("uStage").textContent = `Page ${cur + 1} / 4`;
+      document.querySelectorAll(".nopt").forEach(b => { b.classList.remove("ok", "no"); b.lastChild.textContent = ""; });
+    }
+
+    function loop(now) {
+      const dt = now - last; last = now;
+      if (playing) {
+        elapsed += dt;
+        fills[cur].style.transform = `scaleX(${Math.min(1, elapsed / DURS[cur])})`;
+        if (cur === 3 && !open && elapsed >= 4000) { open = true; sticky.classList.add("open"); }
+        if (elapsed >= DURS[cur]) go(cur + 1);
+      }
+      requestAnimationFrame(loop);
+    }
+
+    document.getElementById("playBtn").onclick = (e) => { playing = !playing; e.target.textContent = playing ? "暂停" : "播放"; };
+    document.getElementById("prevBtn").onclick = () => go(cur - 1);
+    document.getElementById("nextBtn").onclick = () => go(cur + 1);
+    document.getElementById("revealBtn").onclick = () => { open = !open; sticky.classList.toggle("open", open); };
+    document.getElementById("replayBtn").onclick = () => go(0);
+    tracks.forEach(t => t.onclick = () => go(+t.dataset.s));
+    document.getElementById("demoBtn").onclick = (e) => {
+      idx = (idx + 1) % SAMPLES.length; card = SAMPLES[idx];
+      e.target.textContent = `切换笔记本页 (${idx + 1}/${SAMPLES.length})`;
+      render(card); go(0);
+    };
+
+    render(card); go(0); requestAnimationFrame(loop);
+  </script>
+</body>
+</html>

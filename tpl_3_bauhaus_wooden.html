@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>模板 03 · 包豪斯木质几何教具风 (Bauhaus Blocks)</title>
+  <style>
+    :root {
+      --linen: #F7F3EA;
+      --card: #FFFFFF;
+      --ink: #1E1D1B;
+      --red: #C84B31;
+      --blue: #2D4263;
+      --yellow: #DDA23A;
+      --green: #346751;
+      --sans: "Segoe UI", system-ui, "PingFang SC", "Microsoft YaHei", sans-serif;
+    }
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden;
+      background: #EBE5D8; font-family: var(--sans); color: var(--ink);
+      display: flex; align-items: center; justify-content: center;
+    }
+    .stage { width: min(100vw, 100vh, 620px); height: min(100vw, 100vh, 620px); aspect-ratio: 1 / 1; padding: 14px; }
+    .board {
+      position: relative; width: 100%; height: 100%; background: var(--linen);
+      border: 2.5px solid var(--ink); border-radius: 6px; padding: 18px 20px 14px;
+      display: flex; flex-direction: column; overflow: hidden;
+    }
+
+    /* 顶部积木分段条 */
+    .prog-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 12px; flex-shrink: 0; }
+    .prog-track { height: 8px; background: #E3DCCB; border: 1.5px solid var(--ink); cursor: pointer; overflow: hidden; }
+    .prog-fill { width: 100%; height: 100%; background: var(--blue); transform-origin: left; transform: scaleX(0); }
+    .prog-track.done .prog-fill { transform: scaleX(1); }
+
+    .hdr { display: flex; justify-content: space-between; align-items: center; padding-bottom: 10px; border-bottom: 2px solid var(--ink); margin-bottom: 12px; flex-shrink: 0; }
+    .brand { display: flex; align-items: center; gap: 8px; }
+    .geo-dot { width: 14px; height: 14px; border-radius: 50%; background: var(--red); border: 1.5px solid var(--ink); }
+    .geo-sq { width: 14px; height: 14px; background: var(--yellow); border: 1.5px solid var(--ink); }
+    .subj { font-size: 13px; font-weight: 800; color: var(--ink); }
+    .unit { font-size: 12px; font-weight: 700; color: var(--blue); }
+
+    .ctrls { display: flex; gap: 5px; }
+    .btn {
+      height: 30px; padding: 0 10px; border: 1.5px solid var(--ink); background: var(--card);
+      color: var(--ink); font-size: 12px; font-weight: 800; cursor: pointer;
+    }
+    .btn:hover { background: var(--yellow); }
+
+    .viewport { position: relative; flex: 1; min-height: 0; }
+    .scene {
+      position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: center;
+      opacity: 0; pointer-events: none; transition: opacity 0.35s ease;
+    }
+    .scene.active { opacity: 1; pointer-events: auto; }
+
+    /* 第 1 幕：几何积木拼装 */
+    .bh-hero {
+      height: 100%; display: grid; grid-template-rows: 112px 1fr; gap: 12px;
+    }
+    .geo-stage {
+      display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px;
+    }
+    .block {
+      border: 2px solid var(--ink); display: flex; align-items: center; justify-content: center;
+      font-size: 13px; font-weight: 800; padding: 8px; text-align: center;
+      transition: transform 0.6s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.45s ease;
+      opacity: 0;
+    }
+    .b1 { background: var(--red); color: #fff; border-radius: 56px 0 0 0; transform: translateX(-24px); }
+    .b2 { background: var(--yellow); color: var(--ink); transform: translateY(-20px); transition-delay: 0.12s; }
+    .b3 { background: var(--blue); color: #fff; border-radius: 0 0 56px 0; transform: translateX(24px); transition-delay: 0.24s; }
+    .scene.active .block { opacity: 1; transform: translate(0, 0); }
+
+    .bh-main {
+      background: var(--card); border: 2px solid var(--ink); padding: 20px 22px;
+      display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center;
+    }
+    .bh-word { font-size: clamp(32px, 7.5vw, 44px); font-weight: 900; margin: 0 0 8px; color: var(--blue); }
+    .bh-mean { font-size: 15.5px; font-weight: 600; color: var(--ink); margin: 0; max-width: 90%; }
+
+    /* 第 2 幕：积木对推 */
+    .bh-vs { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; height: 100%; max-height: 365px; }
+    .bh-col {
+      border: 2px solid var(--ink); background: var(--card); display: flex; flex-direction: column; overflow: hidden;
+      opacity: 0; transform: translateY(18px);
+      transition: transform 0.55s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.4s ease;
+    }
+    .bh-col.right { transition-delay: 0.18s; }
+    .scene.active .bh-col { opacity: 1; transform: translateY(0); }
+    .bh-cap { padding: 14px 16px; color: #fff; border-bottom: 2px solid var(--ink); }
+    .bh-col.left .bh-cap { background: var(--green); }
+    .bh-col.right .bh-cap { background: var(--red); }
+    .bh-cap h2 { font-size: 22px; font-weight: 900; margin: 0 0 4px; }
+    .bh-cap p { font-size: 12.5px; margin: 0; opacity: 0.92; }
+    .bh-list { list-style: none; padding: 14px; margin: 0; display: flex; flex-direction: column; gap: 8px; flex: 1; justify-content: center; }
+    .bh-list li { font-size: 13.5px; font-weight: 700; padding: 8px 10px; background: var(--linen); border: 1.5px solid var(--ink); }
+
+    /* 第 3 幕：色块例句 */
+    .bh-sent-wrap {
+      background: var(--card); border: 2px solid var(--ink); height: 100%; max-height: 365px;
+      display: grid; grid-template-rows: 1fr auto; overflow: hidden;
+    }
+    .bh-sent-top { padding: 24px 22px; display: flex; flex-direction: column; justify-content: center; gap: 14px; }
+    .bh-p { font-size: clamp(19px, 3.6vw, 23px); font-weight: 800; line-height: 1.65; margin: 0; }
+    .bh-hl {
+      display: inline-block; padding: 0 8px; background: var(--yellow); border: 1.5px solid var(--ink);
+      transform: translateY(0); transition: transform 0.35s ease 0.35s;
+    }
+    .scene.active .bh-hl { transform: translateY(-2px); box-shadow: 3px 3px 0 var(--red); }
+    .bh-zh { font-size: 14.5px; font-weight: 600; color: #524F49; margin: 0; }
+    .bh-tip-bar { background: var(--blue); color: #fff; padding: 14px 20px; border-top: 2px solid var(--ink); font-size: 13.5px; font-weight: 700; line-height: 1.5; }
+
+    /* 第 4 幕：clip-path 扇形面板揭晓答题 */
+    .bh-quiz {
+      position: relative; height: 100%; background: var(--card); border: 2px solid var(--ink);
+      padding: 20px; display: flex; flex-direction: column; justify-content: space-between; overflow: hidden;
+    }
+    .bh-q { font-size: 18px; font-weight: 800; line-height: 1.45; margin: 6px 0 12px; }
+    .bh-opts { display: flex; flex-direction: column; gap: 9px; }
+    .bopt {
+      min-height: 46px; padding: 10px 14px; border: 1.5px solid var(--ink); background: var(--linen);
+      font-size: 14.5px; font-weight: 800; text-align: left; cursor: pointer;
+      display: flex; justify-content: space-between; align-items: center;
+      transition: background-color 0.15s ease;
+    }
+    .bopt:hover { background: var(--yellow); }
+    .bopt.ok { background: #D4E8DC; border-color: var(--green); color: var(--green); }
+    .bopt.no { background: #F4DAD3; border-color: var(--red); color: var(--red); }
+
+    .iris-panel {
+      position: absolute; inset: 0; background: var(--green); color: #fff;
+      padding: 24px; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; gap: 14px;
+      clip-path: circle(0% at 92% 92%);
+      transition: clip-path 0.65s cubic-bezier(0.22, 1, 0.36, 1);
+      z-index: 5;
+    }
+    .iris-panel.open { clip-path: circle(150% at 92% 92%); }
+    .iris-ans { font-size: 32px; font-weight: 900; margin: 0; color: var(--yellow); }
+    .iris-exp { font-size: 15px; line-height: 1.65; max-width: 90%; margin: 0; background: rgba(0, 0, 0, 0.18); padding: 14px 16px; border: 1.5px solid rgba(255, 255, 255, 0.45); }
+
+    .ftr { display: flex; justify-content: space-between; align-items: center; border-top: 2px solid var(--ink); padding-top: 8px; margin-top: 10px; font-size: 11.5px; font-weight: 800; flex-shrink: 0; }
+  </style>
+</head>
+<body>
+  <main class="stage">
+    <section class="board" aria-label="包豪斯几何积木学习卡">
+      <div class="prog-row">
+        <div class="prog-track" data-s="0"><div class="prog-fill"></div></div>
+        <div class="prog-track" data-s="1"><div class="prog-fill"></div></div>
+        <div class="prog-track" data-s="2"><div class="prog-fill"></div></div>
+        <div class="prog-track" data-s="3"><div class="prog-fill"></div></div>
+      </div>
+
+      <header class="hdr">
+        <div class="brand">
+          <span class="geo-dot"></span><span class="geo-sq"></span>
+          <span class="subj" id="uSubj"></span>
+          <span class="unit" id="uUnit"></span>
+        </div>
+        <div class="ctrls">
+          <button class="btn" id="prevBtn" type="button">&lt;</button>
+          <button class="btn" id="playBtn" type="button">暂停</button>
+          <button class="btn" id="nextBtn" type="button">&gt;</button>
+        </div>
+      </header>
+
+      <div class="viewport">
+        <article class="scene active" data-s="0">
+          <div class="bh-hero">
+            <div class="geo-stage" id="uChips"></div>
+            <div class="bh-main">
+              <div style="font-size:12px;font-weight:800;color:var(--red);letter-spacing:1px;margin-bottom:6px">CORE BLOCK · 01</div>
+              <h1 class="bh-word" id="uWord"></h1>
+              <p class="bh-mean" id="uMean"></p>
+            </div>
+          </div>
+        </article>
+
+        <article class="scene" data-s="1">
+          <div class="bh-vs">
+            <div class="bh-col left">
+              <div class="bh-cap"><h2 id="uLTerm"></h2><p id="uLDesc"></p></div>
+              <ul class="bh-list" id="uLList"></ul>
+            </div>
+            <div class="bh-col right">
+              <div class="bh-cap"><h2 id="uRTerm"></h2><p id="uRDesc"></p></div>
+              <ul class="bh-list" id="uRList"></ul>
+            </div>
+          </div>
+        </article>
+
+        <article class="scene" data-s="2">
+          <div class="bh-sent-wrap">
+            <div class="bh-sent-top">
+              <p class="bh-p" id="uSent"></p>
+              <p class="bh-zh" id="uTrans"></p>
+            </div>
+            <div class="bh-tip-bar" id="uTip"></div>
+          </div>
+        </article>
+
+        <article class="scene" data-s="3">
+          <div class="bh-quiz">
+            <div>
+              <div style="font-size:12px;font-weight:800;color:var(--blue)">BLOCK QUIZ · 实战测试</div>
+              <div class="bh-q" id="uQ"></div>
+              <div class="bh-opts" id="uOpts"></div>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:center">
+              <span style="font-size:12px;font-weight:700">4 秒后扇形展开答案</span>
+              <button class="btn" id="revealBtn" type="button">展开答案</button>
+            </div>
+            <div class="iris-panel" id="iris">
+              <div style="font-size:12px;font-weight:800;letter-spacing:1.2px">ANSWER</div>
+              <p class="iris-ans" id="uAns"></p>
+              <p class="iris-exp" id="uExp"></p>
+              <button class="btn" id="replayBtn" type="button">重头再来</button>
+            </div>
+          </div>
+        </article>
+      </div>
+
+      <footer class="ftr">
+        <button class="btn" id="demoBtn" type="button" style="height:24px;font-size:11px">换学科积木 (1/3)</button>
+        <span id="uStage">BLOCK 1 / 4</span>
+      </footer>
+    </section>
+  </main>
+
+  <script>
+    const SAMPLES = [
+      {
+        subject: "Bahasa Melayu", unit: "Penjodoh Bilangan", word: "seutas",
+        meaning: "一条 / 一串（用于细长、柔软或成串的物品）",
+        chips: ["seutas jam tangan", "seutas rantai", "seutas tali"],
+        compare: {
+          left: { term: "seutas", desc: "软、可弯曲长物", items: ["jam tangan 手表", "rantai 项链", "tali pinggang 腰带"] },
+          right: { term: "sebatang", desc: "较硬直立长条物", items: ["pensel 铅笔", "pokok 树木", "sungai 河流"] }
+        },
+        sentenceBefore: "Ibu memakai ", sentenceHighlight: "seutas", sentenceAfter: " rantai emas yang cantik ke majlis itu.",
+        translation: "妈妈戴着一条漂亮的金项链去参加那个宴会。",
+        tip: "记忆块：能绕在手腕或脖子上的柔软长物（手表/项链/绳子），选 seutas！",
+        quiz: { question: "Ayah membeli _____ tali nilon untuk mengikat kotak itu.", options: ["A. sebatang", "B. seutas", "C. sebiji"], answerIndex: 1, answerText: "B. seutas", explain: "tali nilon（尼龙绳）是细长且柔软的物体，量词用 seutas。" }
+      },
+      {
+        subject: "RBT · 设计与工艺", unit: "Asas Pengaturcaraan", word: "Carta Alir",
+        meaning: "流程图：用标准几何符号表示程序执行的先后步骤",
+        chips: ["Terminator 椭圆起止", "Proses 矩形处理", "Pilihan 菱形判断"],
+        compare: {
+          left: { term: "Proses 矩形", desc: "执行具体运算或动作", items: ["Kira jumlah 计算总和", "Nyalakan LED 点亮灯", "Paparkan teks 显示字"] },
+          right: { term: "Pilihan 菱形", desc: "需要回答「是 / 否」条件", items: ["Adakah markah ≥ 50?", "Ya → Lulus 通过", "Tidak → Cuba lagi"] }
+        },
+        sentenceBefore: "Simbol ", sentenceHighlight: "rombus (菱形)", sentenceAfter: " digunakan untuk membuat pilihan Ya atau Tidak.",
+        translation: "菱形符号在流程图中专门用来表示「条件判断（是 / 否）」。",
+        tip: "几何速记：椭圆做起点终点，长方形做事，菱形问「是不是」！",
+        quiz: { question: "Simbol manakah yang digunakan untuk mula dan tamat dalam carta alir?", options: ["A. Segi empat tepat", "B. Terminal (Bujur)", "C. Rombus"], answerIndex: 1, answerText: "B. Terminal (Bujur 椭圆)", explain: "所有流程图的 Mula（开始）与 Tamat（结束）都固定用圆角椭圆 Terminal 符号。" }
+      },
+      {
+        subject: "Matematik · 几何", unit: "Isipadu Kuboid", word: "V = P × L × T",
+        meaning: "长方体体积 = 长（Panjang）× 宽（Lebar）× 高（Tinggi）",
+        chips: ["Panjang 长", "Lebar 宽", "Tinggi 高"],
+        compare: {
+          left: { term: "单位写法", desc: "三个长度相乘", items: ["cm × cm × cm = cm³", "m × m × m = m³", "读作立方厘米 / 米"] },
+          right: { term: "正方体特例", desc: "三边一样长 (Kubus)", items: ["V = s × s × s", "例: 4×4×4 = 64 cm³", "注意面积是 cm² 别混"] }
+        },
+        sentenceBefore: "Isipadu kotak ialah hasil darab panjang, lebar dan ", sentenceHighlight: "tinggi", sentenceAfter: ".",
+        translation: "盒子的体积等于它的长、宽、高三个维度的乘积。",
+        tip: "易错提醒：面积乘 2 次（cm²），体积乘 3 次（cm³），先检查单位是否统一！",
+        quiz: { question: "Sebuah kuboid berukuran 5 cm × 3 cm × 2 cm. Berapakah isipadunya?", options: ["A. 10 cm³", "B. 30 cm³", "C. 30 cm²"], answerIndex: 1, answerText: "B. 30 cm³", explain: "5 × 3 × 2 = 30，体积单位必须是三次方 cm³。" }
+      }
+    ];
+
+    function loadCard() {
+      try {
+        const raw = new URLSearchParams(location.search).get("d");
+        if (!raw) return SAMPLES[0];
+        const bin = atob(raw.replace(/-/g, "+").replace(/_/g, "/"));
+        return { ...SAMPLES[0], ...JSON.parse(new TextDecoder().decode(Uint8Array.from(bin, c => c.charCodeAt(0)))) };
+      } catch { return SAMPLES[0]; }
+    }
+
+    let idx = 0, card = loadCard(), cur = 0, elapsed = 0, playing = true, open = false, last = performance.now();
+    const DURS = [4000, 4600, 4600, 7000];
+    const scenes = [...document.querySelectorAll(".scene")];
+    const tracks = [...document.querySelectorAll(".prog-track")];
+    const fills = tracks.map(t => t.querySelector(".prog-fill"));
+    const iris = document.getElementById("iris");
+
+    function render(c) {
+      document.getElementById("uSubj").textContent = c.subject;
+      document.getElementById("uUnit").textContent = c.unit;
+      document.getElementById("uWord").textContent = c.word;
+      document.getElementById("uMean").textContent = c.meaning;
+      const ch = document.getElementById("uChips"); ch.innerHTML = "";
+      ["b1", "b2", "b3"].forEach((cls, i) => {
+        const d = document.createElement("div"); d.className = "block " + cls;
+        d.textContent = c.chips[i] || ""; ch.appendChild(d);
+      });
+      document.getElementById("uLTerm").textContent = c.compare.left.term;
+      document.getElementById("uLDesc").textContent = c.compare.left.desc;
+      const ul = document.getElementById("uLList"); ul.innerHTML = "";
+      c.compare.left.items.forEach(t => { const li = document.createElement("li"); li.textContent = t; ul.appendChild(li); });
+      document.getElementById("uRTerm").textContent = c.compare.right.term;
+      document.getElementById("uRDesc").textContent = c.compare.right.desc;
+      const ur = document.getElementById("uRList"); ur.innerHTML = "";
+      c.compare.right.items.forEach(t => { const li = document.createElement("li"); li.textContent = t; ur.appendChild(li); });
+      const se = document.getElementById("uSent"); se.innerHTML = "";
+      se.appendChild(document.createTextNode(c.sentenceBefore));
+      const hl = document.createElement("span"); hl.className = "bh-hl"; hl.textContent = c.sentenceHighlight;
+      se.appendChild(hl); se.appendChild(document.createTextNode(c.sentenceAfter));
+      document.getElementById("uTrans").textContent = c.translation;
+      document.getElementById("uTip").textContent = c.tip;
+      document.getElementById("uQ").textContent = c.quiz.question;
+      document.getElementById("uAns").textContent = c.quiz.answerText;
+      document.getElementById("uExp").textContent = c.quiz.explain;
+      const op = document.getElementById("uOpts"); op.innerHTML = "";
+      c.quiz.options.forEach((o, i) => {
+        const b = document.createElement("button"); b.type = "button"; b.className = "bopt";
+        b.innerHTML = "<span></span><span></span>"; b.firstChild.textContent = o;
+        b.onclick = () => {
+          const ok = i === c.quiz.answerIndex;
+          b.classList.add(ok ? "ok" : "no"); b.lastChild.textContent = ok ? "OK" : "X";
+          if (ok) setTimeout(() => { open = true; iris.classList.add("open"); }, 420);
+        };
+        op.appendChild(b);
+      });
+    }
+
+    function go(n) {
+      cur = (n + 4) % 4; elapsed = 0; open = false; iris.classList.remove("open");
+      scenes.forEach((s, i) => s.classList.toggle("active", i === cur));
+      tracks.forEach((t, i) => { t.classList.toggle("done", i < cur); fills[i].style.transform = i < cur ? "scaleX(1)" : "scaleX(0)"; });
+      document.getElementById("uStage").textContent = `BLOCK ${cur + 1} / 4`;
+      document.querySelectorAll(".bopt").forEach(b => { b.classList.remove("ok", "no"); b.lastChild.textContent = ""; });
+    }
+
+    function loop(now) {
+      const dt = now - last; last = now;
+      if (playing) {
+        elapsed += dt;
+        fills[cur].style.transform = `scaleX(${Math.min(1, elapsed / DURS[cur])})`;
+        if (cur === 3 && !open && elapsed >= 4000) { open = true; iris.classList.add("open"); }
+        if (elapsed >= DURS[cur]) go(cur + 1);
+      }
+      requestAnimationFrame(loop);
+    }
+
+    document.getElementById("playBtn").onclick = (e) => { playing = !playing; e.target.textContent = playing ? "暂停" : "播放"; };
+    document.getElementById("prevBtn").onclick = () => go(cur - 1);
+    document.getElementById("nextBtn").onclick = () => go(cur + 1);
+    document.getElementById("revealBtn").onclick = () => { open = !open; iris.classList.toggle("open", open); };
+    document.getElementById("replayBtn").onclick = () => go(0);
+    tracks.forEach(t => t.onclick = () => go(+t.dataset.s));
+    document.getElementById("demoBtn").onclick = (e) => {
+      idx = (idx + 1) % SAMPLES.length; card = SAMPLES[idx];
+      e.target.textContent = `换学科积木 (${idx + 1}/${SAMPLES.length})`;
+      render(card); go(0);
+    };
+
+    render(card); go(0); requestAnimationFrame(loop);
+  </script>
+</body>
+</html>

@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>模板 02 · 孔版印刷独立杂志风 (Risograph)</title>
+  <style>
+    :root {
+      --paper: #F3F0EA;
+      --ink: #1C1B19;
+      --cobalt: #1C489E;
+      --coral: #E6553B;
+      --mustard: #E4A92C;
+      --sans: "Segoe UI", system-ui, "PingFang SC", "Microsoft YaHei", sans-serif;
+    }
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden;
+      background: #E5E1D9; font-family: var(--sans); color: var(--ink);
+      display: flex; align-items: center; justify-content: center;
+    }
+    .stage {
+      width: min(100vw, 100vh, 620px); height: min(100vw, 100vh, 620px);
+      aspect-ratio: 1 / 1; padding: 14px;
+    }
+    .zine {
+      position: relative; width: 100%; height: 100%;
+      background-color: var(--paper);
+      background-image: radial-gradient(rgba(28, 72, 158, 0.08) 1px, transparent 1px);
+      background-size: 10px 10px;
+      border: 2px solid var(--ink);
+      box-shadow: 6px 6px 0 var(--cobalt);
+      padding: 18px 20px 14px;
+      display: flex; flex-direction: column; overflow: hidden;
+    }
+
+    .prog-row {
+      display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px;
+      margin-bottom: 12px; flex-shrink: 0;
+    }
+    .prog-track { height: 7px; border: 1.5px solid var(--ink); background: #FFFDF8; cursor: pointer; overflow: hidden; }
+    .prog-fill {
+      width: 100%; height: 100%; background: var(--coral);
+      transform-origin: left; transform: scaleX(0);
+    }
+    .prog-track.done .prog-fill { transform: scaleX(1); }
+
+    .hdr {
+      display: flex; align-items: center; justify-content: space-between;
+      border-bottom: 2px solid var(--ink); padding-bottom: 10px; margin-bottom: 12px; flex-shrink: 0;
+    }
+    .issue-tag {
+      display: inline-flex; align-items: center; gap: 8px;
+    }
+    .pill-blue {
+      background: var(--cobalt); color: #fff; font-size: 12px; font-weight: 800;
+      padding: 4px 10px; letter-spacing: 0.4px;
+    }
+    .unit-txt { font-size: 12px; font-weight: 700; color: var(--coral); text-transform: uppercase; }
+    .ctrls { display: flex; gap: 5px; }
+    .btn {
+      height: 30px; padding: 0 10px; border: 1.5px solid var(--ink); background: #FFFDF8;
+      color: var(--ink); font-size: 12px; font-weight: 800; cursor: pointer;
+      box-shadow: 2px 2px 0 var(--ink); transition: transform 0.12s ease;
+    }
+    .btn:active { transform: translate(2px, 2px); box-shadow: none; }
+
+    .viewport { position: relative; flex: 1; min-height: 0; }
+    .scene {
+      position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: center;
+      opacity: 0; pointer-events: none; transition: opacity 0.35s ease;
+    }
+    .scene.active { opacity: 1; pointer-events: auto; }
+
+    /* 第 1 幕：孔版双色套印校准则 */
+    .riso-hero {
+      height: 100%; background: #FFFDF8; border: 2px solid var(--ink);
+      padding: 24px 22px; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center;
+      position: relative;
+    }
+    /* 半调圆点装饰角 */
+    .halftone-corner {
+      position: absolute; top: 12px; right: 12px; width: 64px; height: 64px;
+      background-image: radial-gradient(var(--mustard) 2px, transparent 2px);
+      background-size: 8px 8px; opacity: 0.85;
+    }
+    .riso-word-wrap { position: relative; margin: 10px 0 12px; }
+    .riso-word-ghost {
+      position: absolute; inset: 0; font-size: clamp(36px, 8vw, 48px); font-weight: 900;
+      color: rgba(230, 85, 59, 0.35); pointer-events: none;
+      transform: translate(12px, -6px);
+      transition: transform 0.7s cubic-bezier(0.22, 1, 0.36, 1) 0.1s;
+    }
+    .scene.active .riso-word-ghost { transform: translate(3px, 3px); }
+    .riso-word {
+      position: relative; font-size: clamp(36px, 8vw, 48px); font-weight: 900;
+      color: var(--cobalt); margin: 0; letter-spacing: -0.5px;
+      transform: translate(-10px, 4px); opacity: 0;
+      transition: transform 0.65s cubic-bezier(0.22, 1, 0.36, 1) 0.05s, opacity 0.4s ease;
+    }
+    .scene.active .riso-word { transform: translate(0, 0); opacity: 1; }
+    .riso-mean { font-size: 16px; font-weight: 700; color: var(--ink); margin: 0 0 18px; max-width: 90%; }
+    .riso-chips { display: flex; flex-wrap: wrap; justify-content: center; gap: 9px; }
+    .r-chip {
+      padding: 7px 12px; border: 1.5px solid var(--ink); background: var(--mustard);
+      font-size: 13px; font-weight: 800; box-shadow: 3px 3px 0 var(--cobalt);
+      opacity: 0; transform: translateY(10px); transition: opacity 0.35s ease, transform 0.4s ease;
+    }
+    .r-chip:nth-child(2) { background: #E9EFFB; box-shadow: 3px 3px 0 var(--coral); }
+    .r-chip:nth-child(3) { background: #FCEAE6; box-shadow: 3px 3px 0 var(--ink); }
+    .scene.active .r-chip:nth-child(1) { transition-delay: 0.2s; opacity: 1; transform: none; }
+    .scene.active .r-chip:nth-child(2) { transition-delay: 0.34s; opacity: 1; transform: none; }
+    .scene.active .r-chip:nth-child(3) { transition-delay: 0.48s; opacity: 1; transform: none; }
+
+    /* 第 2 幕：瑞士网格交叉分裂对比 */
+    .swiss-grid {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 14px; height: 100%; max-height: 360px;
+    }
+    .sw-box {
+      background: #FFFDF8; border: 2px solid var(--ink); padding: 18px 14px;
+      display: flex; flex-direction: column; justify-content: space-between;
+      transform: translateX(-16px); opacity: 0;
+      transition: transform 0.55s cubic-bezier(0.22, 1, 0.36, 1) 0.1s, opacity 0.4s ease;
+    }
+    .sw-box.right { transform: translateX(16px); box-shadow: 4px 4px 0 var(--coral); }
+    .sw-box.left { box-shadow: 4px 4px 0 var(--cobalt); }
+    .scene.active .sw-box { transform: translateX(0); opacity: 1; }
+    .sw-h { font-size: 24px; font-weight: 900; margin: 0 0 6px; color: var(--cobalt); }
+    .sw-box.right .sw-h { color: var(--coral); }
+    .sw-d { font-size: 12.5px; font-weight: 600; color: #4A4843; margin: 0 0 12px; }
+    .sw-ul { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 7px; }
+    .sw-ul li { font-size: 13px; font-weight: 700; padding: 7px 9px; background: var(--paper); border-left: 4px solid var(--cobalt); }
+    .sw-box.right .sw-ul li { border-left-color: var(--coral); }
+
+    /* 第 3 幕：荧光笔刷横扫涂抹 */
+    .zine-quote {
+      background: #FFFDF8; border: 2px solid var(--ink); box-shadow: 4px 4px 0 var(--mustard);
+      padding: 24px 22px; height: 100%; max-height: 360px;
+      display: flex; flex-direction: column; justify-content: center; gap: 18px;
+    }
+    .zq-p { font-size: clamp(19px, 3.6vw, 23px); font-weight: 800; line-height: 1.65; margin: 0; }
+    .brush {
+      position: relative; display: inline-block; padding: 0 6px; z-index: 1;
+    }
+    .brush::before {
+      content: ""; position: absolute; left: 0; right: 0; bottom: 3px; top: 3px; z-index: -1;
+      background: var(--mustard); transform-origin: left; transform: scaleX(0);
+      transition: transform 0.65s cubic-bezier(0.22, 1, 0.36, 1) 0.3s;
+    }
+    .scene.active .brush::before { transform: scaleX(1); }
+    .zq-zh { font-size: 14.5px; font-weight: 600; margin: 0; padding-left: 12px; border-left: 4px solid var(--cobalt); }
+    .zq-tip { background: var(--cobalt); color: #fff; padding: 12px 14px; font-size: 13.5px; font-weight: 700; line-height: 1.5; }
+
+    /* 第 4 幕：斜切邮戳印章答题卡 */
+    .zq-quiz {
+      position: relative; height: 100%; background: #FFFDF8; border: 2px solid var(--ink);
+      padding: 20px; display: flex; flex-direction: column; justify-content: space-between; overflow: hidden;
+    }
+    .zq-q { font-size: 18px; font-weight: 800; line-height: 1.45; margin: 6px 0 12px; }
+    .zq-opts { display: flex; flex-direction: column; gap: 9px; }
+    .zopt {
+      min-height: 46px; padding: 10px 14px; border: 1.5px solid var(--ink); background: var(--paper);
+      font-size: 14.5px; font-weight: 800; text-align: left; cursor: pointer;
+      display: flex; justify-content: space-between; align-items: center;
+      transition: background-color 0.15s ease, transform 0.12s ease;
+    }
+    .zopt:hover { background: var(--mustard); }
+    .zopt.ok { background: #D7EEDB; border-color: #1F6E3D; color: #154E2B; }
+    .zopt.no { background: #FADAD5; border-color: var(--coral); color: #8A2414; }
+
+    .stamp-overlay {
+      position: absolute; inset: 0; background: #FAF7F0;
+      padding: 24px; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; gap: 14px;
+      opacity: 0; pointer-events: none; transform: scale(1.06);
+      transition: opacity 0.35s ease, transform 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+    .stamp-overlay.open { opacity: 1; pointer-events: auto; transform: scale(1); }
+    .stamp-mark {
+      border: 3px solid var(--coral); color: var(--coral); font-size: 13px; font-weight: 900;
+      padding: 4px 12px; letter-spacing: 1.5px; transform: rotate(-6deg);
+    }
+    .z-ans { font-size: 30px; font-weight: 900; color: var(--cobalt); margin: 0; }
+    .z-exp { font-size: 14.5px; font-weight: 600; line-height: 1.6; max-width: 90%; margin: 0; }
+
+    .ftr {
+      display: flex; justify-content: space-between; align-items: center;
+      border-top: 2px solid var(--ink); padding-top: 8px; margin-top: 10px;
+      font-size: 11.5px; font-weight: 800; flex-shrink: 0;
+    }
+  </style>
+</head>
+<body>
+  <main class="stage">
+    <section class="zine" aria-label="孔版印刷风闪卡">
+      <div class="prog-row">
+        <div class="prog-track" data-s="0"><div class="prog-fill"></div></div>
+        <div class="prog-track" data-s="1"><div class="prog-fill"></div></div>
+        <div class="prog-track" data-s="2"><div class="prog-fill"></div></div>
+        <div class="prog-track" data-s="3"><div class="prog-fill"></div></div>
+      </div>
+
+      <header class="hdr">
+        <div class="issue-tag">
+          <span class="pill-blue" id="uSubj"></span>
+          <span class="unit-txt" id="uUnit"></span>
+        </div>
+        <div class="ctrls">
+          <button class="btn" id="prevBtn" type="button">&lt;</button>
+          <button class="btn" id="playBtn" type="button">PAUSE</button>
+          <button class="btn" id="nextBtn" type="button">&gt;</button>
+        </div>
+      </header>
+
+      <div class="viewport">
+        <article class="scene active" data-s="0">
+          <div class="riso-hero">
+            <div class="halftone-corner"></div>
+            <div style="font-size:12px;font-weight:900;letter-spacing:1.2px;color:var(--coral)">RISO ISSUE · 01</div>
+            <div class="riso-word-wrap">
+              <div class="riso-word-ghost" id="uWordGhost"></div>
+              <h1 class="riso-word" id="uWord"></h1>
+            </div>
+            <p class="riso-mean" id="uMean"></p>
+            <div class="riso-chips" id="uChips"></div>
+          </div>
+        </article>
+
+        <article class="scene" data-s="1">
+          <div class="swiss-grid">
+            <div class="sw-box left">
+              <div><h2 class="sw-h" id="uLTerm"></h2><p class="sw-d" id="uLDesc"></p></div>
+              <ul class="sw-ul" id="uLList"></ul>
+            </div>
+            <div class="sw-box right">
+              <div><h2 class="sw-h" id="uRTerm"></h2><p class="sw-d" id="uRDesc"></p></div>
+              <ul class="sw-ul" id="uRList"></ul>
+            </div>
+          </div>
+        </article>
+
+        <article class="scene" data-s="2">
+          <div class="zine-quote">
+            <p class="zq-p" id="uSent"></p>
+            <p class="zq-zh" id="uTrans"></p>
+            <div class="zq-tip" id="uTip"></div>
+          </div>
+        </article>
+
+        <article class="scene" data-s="3">
+          <div class="zq-quiz">
+            <div>
+              <div style="font-size:12px;font-weight:900;color:var(--cobalt)">QUICK CHECK · 随堂小测</div>
+              <div class="zq-q" id="uQ"></div>
+              <div class="zq-opts" id="uOpts"></div>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:center">
+              <span style="font-size:12px;font-weight:700">4 秒后盖章揭晓</span>
+              <button class="btn" id="revealBtn" type="button">盖章看答案</button>
+            </div>
+            <div class="stamp-overlay" id="overlay">
+              <div class="stamp-mark">VERIFIED · PASS</div>
+              <p class="z-ans" id="uAns"></p>
+              <p class="z-exp" id="uExp"></p>
+              <button class="btn" id="replayBtn" type="button">REPLAY</button>
+            </div>
+          </div>
+        </article>
+      </div>
+
+      <footer class="ftr">
+        <button class="btn" id="demoBtn" type="button" style="height:24px;font-size:11px">NEXT CARD (1/3)</button>
+        <span id="uStage">01 / 04</span>
+      </footer>
+    </section>
+  </main>
+
+  <script>
+    const SAMPLES = [
+      {
+        subject: "BAHASA MELAYU", unit: "Penjodoh Bilangan", word: "seutas",
+        meaning: "一条 / 一串（用于细长、柔软或成串的物品）",
+        chips: ["seutas jam tangan", "seutas rantai", "seutas tali"],
+        compare: {
+          left: { term: "seutas", desc: "软、可弯曲或可佩戴的长条物", items: ["jam tangan 手表", "rantai 项链", "tali pinggang 腰带"] },
+          right: { term: "sebatang", desc: "长条形、较硬、笔直的物体", items: ["pensel 铅笔", "pokok 树木", "sungai 河流"] }
+        },
+        sentenceBefore: "Ibu memakai ", sentenceHighlight: "seutas", sentenceAfter: " rantai emas yang cantik ke majlis itu.",
+        translation: "妈妈戴着一条漂亮的金项链去参加那个宴会。",
+        tip: "ZINE TIP：能绕在手腕或脖子上的柔软长物（手表/项链/绳子），用 seutas！",
+        quiz: { question: "Ayah membeli _____ tali nilon untuk mengikat kotak itu.", options: ["A. sebatang", "B. seutas", "C. sebiji"], answerIndex: 1, answerText: "B. seutas", explain: "tali nilon（尼龙绳）细长且柔软可弯曲，所以量词选 seutas。" }
+      },
+      {
+        subject: "ENGLISH", unit: "Irregular Verbs", word: "go · went · gone",
+        meaning: "去（现在式 · 过去式 · 过去分词三态变化）",
+        chips: ["V1: go", "V2: went", "V3: gone"],
+        compare: {
+          left: { term: "V2 · went", desc: "过去某个时间发生（昨天/上周）", items: ["went to school yesterday", "went home at 5 p.m.", "主语+went 直接用"] },
+          right: { term: "V3 · gone", desc: "必须搭配 has / have / had", items: ["has gone to Penang", "have gone out", "已经去了某地未回"] }
+        },
+        sentenceBefore: "Ali ", sentenceHighlight: "went", sentenceAfter: " to the library with his sister yesterday morning.",
+        translation: "阿里昨天早上和妹妹一起去了图书馆。",
+        tip: "看到 yesterday / last week 选 V2 (went)；看到 has / have 选 V3 (gone)。",
+        quiz: { question: "My father has _____ to Kuala Lumpur for a meeting.", options: ["A. go", "B. went", "C. gone"], answerIndex: 2, answerText: "C. gone", explain: "句中有助动词 has，构成现在完成时 has + V3，因此用 gone。" }
+      },
+      {
+        subject: "MATEMATIK", unit: "Pecahan · 分数", word: "1/2 + 1/4 = 3/4",
+        meaning: "异分母分数相加，先通分再把分子相加",
+        chips: ["通分母 2 → 4", "分子 2 + 1 = 3", "分母不变 = 4"],
+        compare: {
+          left: { term: "正确通分", desc: "先找最小公倍数", items: ["1/2 = 2/4（上下同乘2）", "2/4 + 1/4 = 3/4", "结果记得约分"] },
+          right: { term: "常见错法", desc: "分子分母直接相加", items: ["1/2 + 1/4 = 2/6 (错!)", "忘记把分子一起乘大", "通分不统一不能加"] }
+        },
+        sentenceBefore: "Samakan ", sentenceHighlight: "penyebut", sentenceAfter: " terlebih dahulu sebelum menambah pengangka.",
+        translation: "把分子相加之前，必须先把分母通分变成一样。",
+        tip: "切记：分子可以相加，分母千万不要加在一起！",
+        quiz: { question: "Kira: 1/3 + 1/6 = ?", options: ["A. 2/9", "B. 1/2", "C. 2/6"], answerIndex: 1, answerText: "B. 1/2", explain: "1/3 通分成 2/6，2/6 + 1/6 = 3/6，约分后等于最简分数 1/2。" }
+      }
+    ];
+
+    function loadCard() {
+      try {
+        const raw = new URLSearchParams(location.search).get("d");
+        if (!raw) return SAMPLES[0];
+        const bin = atob(raw.replace(/-/g, "+").replace(/_/g, "/"));
+        return { ...SAMPLES[0], ...JSON.parse(new TextDecoder().decode(Uint8Array.from(bin, c => c.charCodeAt(0)))) };
+      } catch { return SAMPLES[0]; }
+    }
+
+    let idx = 0, card = loadCard(), cur = 0, elapsed = 0, playing = true, open = false, last = performance.now();
+    const DURS = [4000, 4600, 4600, 7000];
+    const scenes = [...document.querySelectorAll(".scene")];
+    const tracks = [...document.querySelectorAll(".prog-track")];
+    const fills = tracks.map(t => t.querySelector(".prog-fill"));
+    const overlay = document.getElementById("overlay");
+
+    function render(c) {
+      document.getElementById("uSubj").textContent = c.subject;
+      document.getElementById("uUnit").textContent = c.unit;
+      document.getElementById("uWord").textContent = c.word;
+      document.getElementById("uWordGhost").textContent = c.word;
+      document.getElementById("uMean").textContent = c.meaning;
+      const ch = document.getElementById("uChips"); ch.innerHTML = "";
+      c.chips.forEach(t => { const s = document.createElement("span"); s.className = "r-chip"; s.textContent = t; ch.appendChild(s); });
+      document.getElementById("uLTerm").textContent = c.compare.left.term;
+      document.getElementById("uLDesc").textContent = c.compare.left.desc;
+      const ul = document.getElementById("uLList"); ul.innerHTML = "";
+      c.compare.left.items.forEach(t => { const li = document.createElement("li"); li.textContent = t; ul.appendChild(li); });
+      document.getElementById("uRTerm").textContent = c.compare.right.term;
+      document.getElementById("uRDesc").textContent = c.compare.right.desc;
+      const ur = document.getElementById("uRList"); ur.innerHTML = "";
+      c.compare.right.items.forEach(t => { const li = document.createElement("li"); li.textContent = t; ur.appendChild(li); });
+      const se = document.getElementById("uSent"); se.innerHTML = "";
+      se.appendChild(document.createTextNode(c.sentenceBefore));
+      const hl = document.createElement("span"); hl.className = "brush"; hl.textContent = c.sentenceHighlight;
+      se.appendChild(hl); se.appendChild(document.createTextNode(c.sentenceAfter));
+      document.getElementById("uTrans").textContent = c.translation;
+      document.getElementById("uTip").textContent = c.tip;
+      document.getElementById("uQ").textContent = c.quiz.question;
+      document.getElementById("uAns").textContent = c.quiz.answerText;
+      document.getElementById("uExp").textContent = c.quiz.explain;
+      const op = document.getElementById("uOpts"); op.innerHTML = "";
+      c.quiz.options.forEach((o, i) => {
+        const b = document.createElement("button"); b.type = "button"; b.className = "zopt";
+        b.innerHTML = "<span></span><span></span>"; b.firstChild.textContent = o;
+        b.onclick = () => {
+          const ok = i === c.quiz.answerIndex;
+          b.classList.add(ok ? "ok" : "no"); b.lastChild.textContent = ok ? "PASS" : "RETRY";
+          if (ok) setTimeout(() => { open = true; overlay.classList.add("open"); }, 420);
+        };
+        op.appendChild(b);
+      });
+    }
+
+    function go(n) {
+      cur = (n + 4) % 4; elapsed = 0; open = false; overlay.classList.remove("open");
+      scenes.forEach((s, i) => s.classList.toggle("active", i === cur));
+      tracks.forEach((t, i) => { t.classList.toggle("done", i < cur); fills[i].style.transform = i < cur ? "scaleX(1)" : "scaleX(0)"; });
+      document.getElementById("uStage").textContent = `0${cur + 1} / 04`;
+      document.querySelectorAll(".zopt").forEach(b => { b.classList.remove("ok", "no"); b.lastChild.textContent = ""; });
+    }
+
+    function loop(now) {
+      const dt = now - last; last = now;
+      if (playing) {
+        elapsed += dt;
+        fills[cur].style.transform = `scaleX(${Math.min(1, elapsed / DURS[cur])})`;
+        if (cur === 3 && !open && elapsed >= 4000) { open = true; overlay.classList.add("open"); }
+        if (elapsed >= DURS[cur]) go(cur + 1);
+      }
+      requestAnimationFrame(loop);
+    }
+
+    document.getElementById("playBtn").onclick = (e) => { playing = !playing; e.target.textContent = playing ? "PAUSE" : "PLAY"; };
+    document.getElementById("prevBtn").onclick = () => go(cur - 1);
+    document.getElementById("nextBtn").onclick = () => go(cur + 1);
+    document.getElementById("revealBtn").onclick = () => { open = !open; overlay.classList.toggle("open", open); };
+    document.getElementById("replayBtn").onclick = () => go(0);
+    tracks.forEach(t => t.onclick = () => go(+t.dataset.s));
+    document.getElementById("demoBtn").onclick = (e) => {
+      idx = (idx + 1) % SAMPLES.length; card = SAMPLES[idx];
+      e.target.textContent = `NEXT CARD (${idx + 1}/${SAMPLES.length})`;
+      render(card); go(0);
+    };
+
+    render(card); go(0); requestAnimationFrame(loop);
+  </script>
+</body>
+</html>

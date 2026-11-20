@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>模板 05 · 教室绿黑板粉笔风 (Classroom Slate)</title>
+  <style>
+    :root {
+      --slate: #1F3B33;
+      --slate-deep: #172E28;
+      --wood: #B7895B;
+      --wood-dark: #875F39;
+      --chalk-w: #F4F1E8;
+      --chalk-y: #F5D675;
+      --chalk-p: #F3B3B0;
+      --chalk-b: #9ED3E8;
+      --chalk-g: #A6DFBA;
+      --sans: "Segoe UI", system-ui, "PingFang SC", "Microsoft YaHei", sans-serif;
+      --serif: Georgia, "Noto Serif SC", serif;
+    }
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden;
+      background: #E8E2D5; font-family: var(--sans); color: var(--chalk-w);
+      display: flex; align-items: center; justify-content: center;
+    }
+    .stage { width: min(100vw, 100vh, 620px); height: min(100vw, 100vh, 620px); aspect-ratio: 1 / 1; padding: 14px; }
+    /* 木质边框绿黑板 */
+    .blackboard {
+      position: relative; width: 100%; height: 100%;
+      background: radial-gradient(circle at 50% 42%, #26483E 0%, var(--slate) 60%, var(--slate-deep) 100%);
+      border: 9px solid var(--wood);
+      border-bottom-width: 14px;
+      border-radius: 10px;
+      box-shadow:
+        inset 0 0 28px rgba(0, 0, 0, 0.35),
+        inset 0 0 0 2px rgba(135, 95, 57, 0.65),
+        0 14px 30px rgba(23, 46, 40, 0.22);
+      padding: 16px 18px 12px;
+      display: flex; flex-direction: column; overflow: hidden;
+    }
+
+    .chalk-dust {
+      position: absolute; inset: 0; width: 100%; height: 100%;
+      opacity: 0.14; pointer-events: none;
+    }
+    .blackboard > *:not(.chalk-dust) { position: relative; z-index: 2; }
+
+    .prog-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 12px; flex-shrink: 0; }
+    .prog-track { height: 5px; background: rgba(244, 241, 232, 0.16); border-radius: 99px; overflow: hidden; cursor: pointer; }
+    .prog-fill { width: 100%; height: 100%; background: var(--chalk-y); border-radius: 99px; transform-origin: left; transform: scaleX(0); }
+    .prog-track.done .prog-fill { transform: scaleX(1); }
+
+    .hdr {
+      display: flex; justify-content: space-between; align-items: center;
+      border-bottom: 1.5px dashed rgba(244, 241, 232, 0.32); padding-bottom: 9px; margin-bottom: 12px; flex-shrink: 0;
+    }
+    .meta { display: flex; align-items: center; gap: 8px; min-width: 0; }
+    .chalk-pill {
+      padding: 3px 10px; border: 1.5px solid var(--chalk-y); border-radius: 999px;
+      color: var(--chalk-y); font-size: 12px; font-weight: 700; white-space: nowrap;
+    }
+    .unit { font-size: 12px; color: var(--chalk-b); font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .ctrls { display: flex; gap: 5px; flex-shrink: 0; }
+    .btn {
+      height: 28px; padding: 0 9px; border-radius: 6px;
+      border: 1.5px solid rgba(244, 241, 232, 0.4); background: rgba(255, 255, 255, 0.08);
+      color: var(--chalk-w); font-size: 12px; font-weight: 700; cursor: pointer;
+    }
+    .btn:hover { background: rgba(245, 214, 117, 0.2); border-color: var(--chalk-y); }
+
+    .viewport { position: relative; flex: 1; min-height: 0; }
+    .scene {
+      position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: center;
+      opacity: 0; transform: translateY(8px); pointer-events: none;
+      transition: opacity 0.4s ease, transform 0.45s ease;
+    }
+    .scene.active { opacity: 1; transform: translateY(0); pointer-events: auto; }
+
+    /* 第 1 幕：板书核心词 */
+    .chalk-hero {
+      height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center;
+      padding: 16px; border: 1.5px dashed rgba(244, 241, 232, 0.25); border-radius: 14px;
+    }
+    .chalk-svg { width: 82px; height: 82px; margin-bottom: 10px; }
+    .chalk-svg svg { width: 100%; height: 100%; stroke: var(--chalk-y); fill: none; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+    .chalk-svg svg path, .chalk-svg svg circle, .chalk-svg svg rect {
+      stroke-dasharray: 240; stroke-dashoffset: 240; transition: stroke-dashoffset 1s ease 0.15s;
+    }
+    .scene.active .chalk-svg svg path, .scene.active .chalk-svg svg circle, .scene.active .chalk-svg svg rect { stroke-dashoffset: 0; }
+    .chalk-word { font-family: var(--serif); font-size: clamp(32px, 7.5vw, 44px); font-weight: 700; color: var(--chalk-w); margin: 0 0 8px; }
+    .chalk-mean { font-size: 15.5px; color: var(--chalk-g); font-weight: 600; margin: 0 0 16px; max-width: 90%; }
+    .chalk-tags { display: flex; flex-wrap: wrap; justify-content: center; gap: 9px; }
+    .ctag {
+      padding: 6px 12px; border: 1.5px solid var(--chalk-b); border-radius: 8px; color: var(--chalk-b);
+      font-size: 13px; font-weight: 700; opacity: 0; transform: translateY(8px); transition: opacity 0.35s ease, transform 0.35s ease;
+    }
+    .ctag:nth-child(2) { border-color: var(--chalk-p); color: var(--chalk-p); }
+    .ctag:nth-child(3) { border-color: var(--chalk-y); color: var(--chalk-y); }
+    .scene.active .ctag:nth-child(1) { transition-delay: 0.2s; opacity: 1; transform: none; }
+    .scene.active .ctag:nth-child(2) { transition-delay: 0.35s; opacity: 1; transform: none; }
+    .scene.active .ctag:nth-child(3) { transition-delay: 0.5s; opacity: 1; transform: none; }
+
+    /* 第 2 幕：黑板竖线分栏板书 */
+    .board-split {
+      display: grid; grid-template-columns: 1fr 1fr; height: 100%; max-height: 360px;
+      border: 1.5px dashed rgba(244, 241, 232, 0.28); border-radius: 12px; position: relative;
+    }
+    .board-split::after {
+      content: ""; position: absolute; top: 14px; bottom: 14px; left: 50%;
+      width: 1.5px; background: repeating-linear-gradient(180deg, rgba(244, 241, 232, 0.45) 0 8px, transparent 8px 14px);
+    }
+    .bs-col { padding: 18px 16px; display: flex; flex-direction: column; justify-content: space-between; }
+    .bs-h { font-family: var(--serif); font-size: 22px; margin: 0 0 6px; color: var(--chalk-g); }
+    .bs-col.right .bs-h { color: var(--chalk-p); }
+    .bs-d { font-size: 12.5px; color: rgba(244, 241, 232, 0.78); margin: 0 0 12px; }
+    .bs-ul { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 8px; }
+    .bs-ul li { font-size: 13.5px; font-weight: 600; padding: 7px 10px; background: rgba(255, 255, 255, 0.06); border-radius: 6px; }
+
+    /* 第 3 幕：粉笔双横线板书例句 */
+    .board-sent {
+      height: 100%; max-height: 360px; padding: 22px 20px; border: 1.5px dashed rgba(244, 241, 232, 0.28); border-radius: 12px;
+      display: flex; flex-direction: column; justify-content: center; gap: 16px;
+    }
+    .bs-p { font-family: var(--serif); font-size: clamp(19px, 3.6vw, 23px); line-height: 1.7; margin: 0; }
+    .chalk-hl { position: relative; display: inline-block; color: var(--chalk-y); font-weight: 700; padding: 0 4px; }
+    .chalk-hl::after {
+      content: ""; position: absolute; left: 0; right: 0; bottom: -2px; height: 4px;
+      border-top: 1.5px solid var(--chalk-y); border-bottom: 1.5px solid var(--chalk-y);
+      transform-origin: left; transform: scaleX(0); transition: transform 0.65s ease 0.35s;
+    }
+    .scene.active .chalk-hl::after { transform: scaleX(1); }
+    .bs-zh { font-size: 14.5px; color: var(--chalk-b); margin: 0; }
+    .bs-tip { border: 1.5px dashed var(--chalk-y); padding: 12px 14px; border-radius: 8px; font-size: 13.5px; color: var(--chalk-y); line-height: 1.55; font-weight: 600; }
+
+    /* 第 4 幕：板擦横扫切出答案 */
+    .board-quiz {
+      position: relative; height: 100%; padding: 18px; border: 1.5px dashed rgba(244, 241, 232, 0.28); border-radius: 12px;
+      display: flex; flex-direction: column; justify-content: space-between; overflow: hidden;
+    }
+    .bq-q { font-size: 17.5px; font-weight: 700; line-height: 1.5; margin: 6px 0 12px; }
+    .bq-opts { display: flex; flex-direction: column; gap: 8px; }
+    .copt {
+      min-height: 45px; padding: 10px 14px; border-radius: 8px; border: 1.5px solid rgba(244, 241, 232, 0.35);
+      background: rgba(255, 255, 255, 0.05); color: var(--chalk-w); font-size: 14.5px; font-weight: 700; text-align: left;
+      cursor: pointer; display: flex; justify-content: space-between; align-items: center;
+      transition: border-color 0.15s ease, background-color 0.15s ease;
+    }
+    .copt:hover { border-color: var(--chalk-y); background: rgba(245, 214, 117, 0.12); }
+    .copt.ok { border-color: var(--chalk-g); background: rgba(166, 223, 186, 0.18); color: var(--chalk-g); }
+    .copt.no { border-color: var(--chalk-p); background: rgba(243, 179, 176, 0.18); color: var(--chalk-p); }
+
+    .eraser-wipe {
+      position: absolute; inset: 0; background: #1B362E; padding: 22px;
+      display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; gap: 14px;
+      clip-path: inset(0 100% 0 0);
+      transition: clip-path 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+      z-index: 5;
+    }
+    .eraser-wipe.open { clip-path: inset(0 0 0 0); }
+    .ew-ans { font-family: var(--serif); font-size: 32px; font-weight: 700; color: var(--chalk-y); margin: 0; }
+    .ew-exp { font-size: 14.5px; line-height: 1.65; max-width: 90%; margin: 0; color: var(--chalk-w); border: 1px dashed rgba(244, 241, 232, 0.35); padding: 12px 14px; border-radius: 8px; }
+
+    .ftr { display: flex; justify-content: space-between; align-items: center; padding-top: 8px; margin-top: 10px; font-size: 11.5px; color: rgba(244, 241, 232, 0.72); flex-shrink: 0; }
+  </style>
+</head>
+<body>
+  <main class="stage">
+    <section class="blackboard" aria-label="教室黑板粉笔闪卡">
+      <svg class="chalk-dust" aria-hidden="true">
+        <filter id="dust"><feTurbulence type="fractalNoise" baseFrequency="0.65" numOctaves="2" /><feColorMatrix type="saturate" values="0" /></filter>
+        <rect width="100%" height="100%" filter="url(#dust)" />
+      </svg>
+
+      <div class="prog-row">
+        <div class="prog-track" data-s="0"><div class="prog-fill"></div></div>
+        <div class="prog-track" data-s="1"><div class="prog-fill"></div></div>
+        <div class="prog-track" data-s="2"><div class="prog-fill"></div></div>
+        <div class="prog-track" data-s="3"><div class="prog-fill"></div></div>
+      </div>
+
+      <header class="hdr">
+        <div class="meta">
+          <span class="chalk-pill" id="uSubj"></span>
+          <span class="unit" id="uUnit"></span>
+        </div>
+        <div class="ctrls">
+          <button class="btn" id="prevBtn" type="button">&lt;</button>
+          <button class="btn" id="playBtn" type="button">暂停</button>
+          <button class="btn" id="nextBtn" type="button">&gt;</button>
+        </div>
+      </header>
+
+      <div class="viewport">
+        <article class="scene active" data-s="0">
+          <div class="chalk-hero">
+            <div class="chalk-svg" id="uIcon"></div>
+            <h1 class="chalk-word" id="uWord"></h1>
+            <p class="chalk-mean" id="uMean"></p>
+            <div class="chalk-tags" id="uChips"></div>
+          </div>
+        </article>
+
+        <article class="scene" data-s="1">
+          <div class="board-split">
+            <div class="bs-col left">
+              <div><h2 class="bs-h" id="uLTerm"></h2><p class="bs-d" id="uLDesc"></p></div>
+              <ul class="bs-ul" id="uLList"></ul>
+            </div>
+            <div class="bs-col right">
+              <div><h2 class="bs-h" id="uRTerm"></h2><p class="bs-d" id="uRDesc"></p></div>
+              <ul class="bs-ul" id="uRList"></ul>
+            </div>
+          </div>
+        </article>
+
+        <article class="scene" data-s="2">
+          <div class="board-sent">
+            <div style="font-size:12px;color:var(--chalk-y);font-weight:700">板书例句 · 重点双画线</div>
+            <p class="bs-p" id="uSent"></p>
+            <p class="bs-zh" id="uTrans"></p>
+            <div class="bs-tip" id="uTip"></div>
+          </div>
+        </article>
+
+        <article class="scene" data-s="3">
+          <div class="board-quiz">
+            <div>
+              <div style="font-size:12px;color:var(--chalk-b);font-weight:700">课堂小测 · 举手抢答</div>
+              <div class="bq-q" id="uQ"></div>
+              <div class="bq-opts" id="uOpts"></div>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:center">
+              <span style="font-size:12px;opacity:0.75">4 秒后黑板擦拭显示正解</span>
+              <button class="btn" id="revealBtn" type="button">看答案</button>
+            </div>
+            <div class="eraser-wipe" id="wipe">
+              <div style="font-size:12px;color:var(--chalk-g);font-weight:700">正确答案 · CHALK KEY</div>
+              <p class="ew-ans" id="uAns"></p>
+              <p class="ew-exp" id="uExp"></p>
+              <button class="btn" id="replayBtn" type="button">重温板书</button>
+            </div>
+          </div>
+        </article>
+      </div>
+
+      <footer class="ftr">
+        <button class="btn" id="demoBtn" type="button" style="height:24px;font-size:11px">换学科板书 (1/3)</button>
+        <span id="uStage">第 1 / 4 幕</span>
+      </footer>
+    </section>
+  </main>
+
+  <script>
+    const SAMPLES = [
+      {
+        subject: "Bahasa Melayu", unit: "Penjodoh Bilangan", word: "seutas",
+        meaning: "一条 / 一串（用于细长、柔软或成串的物品）",
+        chips: ["seutas jam tangan", "seutas rantai", "seutas tali"],
+        iconSvg: `<svg viewBox="0 0 64 64"><circle cx="32" cy="32" r="14"/><path d="M23 19 L25 8 L39 8 L41 19"/><path d="M23 45 L25 56 L39 56 L41 45"/><path d="M32 25 L32 32 L37 35"/></svg>`,
+        compare: {
+          left: { term: "seutas", desc: "软、可弯曲或可佩戴长物", items: ["jam tangan 手表", "rantai 项链", "tali pinggang 腰带"] },
+          right: { term: "sebatang", desc: "长条形、较硬、直立物品", items: ["pensel 铅笔", "pokok 树木", "sungai 河流"] }
+        },
+        sentenceBefore: "Ibu memakai ", sentenceHighlight: "seutas", sentenceAfter: " rantai emas yang cantik ke majlis itu.",
+        translation: "妈妈戴着一条漂亮的金项链去参加那个宴会。",
+        tip: "老师黑板提醒：能绕在手腕或脖子上的柔软长物，都选 seutas！",
+        quiz: { question: "Ayah membeli _____ tali nilon untuk mengikat kotak itu.", options: ["A. sebatang", "B. seutas", "C. sebiji"], answerIndex: 1, answerText: "B. seutas", explain: "tali nilon（尼龙绳）细长柔软，因此量词用 seutas。" }
+      },
+      {
+        subject: "Sains · 科学", unit: "Tahun 3 · 浮与沉", word: "Ketumpatan",
+        meaning: "密度：物体比水大就沉（Tenggelam），比水小就浮（Timbul）",
+        chips: ["Timbul 浮 (ρ < 水)", "Tenggelam 沉 (ρ > 水)", "Gabus / Besi"],
+        iconSvg: `<svg viewBox="0 0 64 64"><rect x="10" y="20" width="44" height="32" rx="3"/><path d="M10 30 Q21 26 32 30 T54 30"/><circle cx="24" cy="28" r="5"/><rect x="36" y="40" width="9" height="9"/></svg>`,
+        compare: {
+          left: { term: "Timbul 浮", desc: "密度比水小", items: ["Gabus 软木塞", "Plastik 塑料瓶盖", "Daun kering 干叶子"] },
+          right: { term: "Tenggelam 沉", desc: "密度比水大", items: ["Batu 石头", "Kunci 铁钥匙", "Guli 玻璃弹珠"] }
+        },
+        sentenceBefore: "Objek yang ", sentenceHighlight: "kurang tumpat", sentenceAfter: " daripada air akan timbul di permukaan air.",
+        translation: "密度比水小的物体会浮在水面上。",
+        tip: "关键陷阱：物体沉浮看「密度」，不看「体积大小」或「轻重」！（大轮船也能浮，小铁钉却会沉）",
+        quiz: { question: "Mengapakah duit syiling tenggelam di dalam air?", options: ["A. Lebih berat", "B. Lebih tumpat daripada air", "C. Bersaiz kecil"], answerIndex: 1, answerText: "B. Lebih tumpat daripada air", explain: "标准科学术语必须答「密度比水大（lebih tumpat）」，不能只答较重。" }
+      },
+      {
+        subject: "Matematik · 数学", unit: "Pecahan & Peratus", word: "1/4 = 25%",
+        meaning: "分数、小数与百分比是同一个数值的三种不同表达方式",
+        chips: ["1/4 = 0.25 = 25%", "1/2 = 0.5 = 50%", "3/4 = 0.75 = 75%"],
+        iconSvg: `<svg viewBox="0 0 64 64"><circle cx="32" cy="32" r="20"/><path d="M32 32 L32 12"/><path d="M32 32 L52 32"/></svg>`,
+        compare: {
+          left: { term: "分数 → 百分比", desc: "直接乘以 100%", items: ["1/5 × 100% = 20%", "3/10 × 100% = 30%", "1/8 × 100% = 12.5%"] },
+          right: { term: "小数 → 百分比", desc: "小数点向右移两位", items: ["0.4 → 40%", "0.08 → 8%", "1.25 → 125%"] }
+        },
+        sentenceBefore: "Untuk menukar pecahan kepada peratus, ", sentenceHighlight: "darabkan dengan 100%", sentenceAfter: ".",
+        translation: "要把分数换算成百分比，只需将分数乘以 100%。",
+        tip: "背熟这 3 组黄金等式：1/4=25%，1/2=50%，3/4=75%，做应用题快 3 倍！",
+        quiz: { question: "Tukarkan 3/5 kepada peratus (%).", options: ["A. 35%", "B. 60%", "C. 75%"], answerIndex: 1, answerText: "B. 60%", explain: "3/5 × 100% = 300% ÷ 5 = 60%。" }
+      }
+    ];
+
+    function loadCard() {
+      try {
+        const raw = new URLSearchParams(location.search).get("d");
+        if (!raw) return SAMPLES[0];
+        const bin = atob(raw.replace(/-/g, "+").replace(/_/g, "/"));
+        return { ...SAMPLES[0], ...JSON.parse(new TextDecoder().decode(Uint8Array.from(bin, c => c.charCodeAt(0)))) };
+      } catch { return SAMPLES[0]; }
+    }
+
+    let idx = 0, card = loadCard(), cur = 0, elapsed = 0, playing = true, open = false, last = performance.now();
+    const DURS = [4200, 4600, 4600, 7000];
+    const scenes = [...document.querySelectorAll(".scene")];
+    const tracks = [...document.querySelectorAll(".prog-track")];
+    const fills = tracks.map(t => t.querySelector(".prog-fill"));
+    const wipe = document.getElementById("wipe");
+
+    function render(c) {
+      document.getElementById("uSubj").textContent = c.subject;
+      document.getElementById("uUnit").textContent = c.unit;
+      document.getElementById("uIcon").innerHTML = c.iconSvg || SAMPLES[0].iconSvg;
+      document.getElementById("uWord").textContent = c.word;
+      document.getElementById("uMean").textContent = c.meaning;
+      const ch = document.getElementById("uChips"); ch.innerHTML = "";
+      c.chips.forEach(t => { const s = document.createElement("span"); s.className = "ctag"; s.textContent = t; ch.appendChild(s); });
+      document.getElementById("uLTerm").textContent = c.compare.left.term;
+      document.getElementById("uLDesc").textContent = c.compare.left.desc;
+      const ul = document.getElementById("uLList"); ul.innerHTML = "";
+      c.compare.left.items.forEach(t => { const li = document.createElement("li"); li.textContent = t; ul.appendChild(li); });
+      document.getElementById("uRTerm").textContent = c.compare.right.term;
+      document.getElementById("uRDesc").textContent = c.compare.right.desc;
+      const ur = document.getElementById("uRList"); ur.innerHTML = "";
+      c.compare.right.items.forEach(t => { const li = document.createElement("li"); li.textContent = t; ur.appendChild(li); });
+      const se = document.getElementById("uSent"); se.innerHTML = "";
+      se.appendChild(document.createTextNode(c.sentenceBefore));
+      const hl = document.createElement("span"); hl.className = "chalk-hl"; hl.textContent = c.sentenceHighlight;
+      se.appendChild(hl); se.appendChild(document.createTextNode(c.sentenceAfter));
+      document.getElementById("uTrans").textContent = c.translation;
+      document.getElementById("uTip").textContent = c.tip;
+      document.getElementById("uQ").textContent = c.quiz.question;
+      document.getElementById("uAns").textContent = c.quiz.answerText;
+      document.getElementById("uExp").textContent = c.quiz.explain;
+      const op = document.getElementById("uOpts"); op.innerHTML = "";
+      c.quiz.options.forEach((o, i) => {
+        const b = document.createElement("button"); b.type = "button"; b.className = "copt";
+        b.innerHTML = "<span></span><span></span>"; b.firstChild.textContent = o;
+        b.onclick = () => {
+          const ok = i === c.quiz.answerIndex;
+          b.classList.add(ok ? "ok" : "no"); b.lastChild.textContent = ok ? "答对了" : "再看看";
+          if (ok) setTimeout(() => { open = true; wipe.classList.add("open"); }, 420);
+        };
+        op.appendChild(b);
+      });
+    }
+
+    function go(n) {
+      cur = (n + 4) % 4; elapsed = 0; open = false; wipe.classList.remove("open");
+      scenes.forEach((s, i) => s.classList.toggle("active", i === cur));
+      tracks.forEach((t, i) => { t.classList.toggle("done", i < cur); fills[i].style.transform = i < cur ? "scaleX(1)" : "scaleX(0)"; });
+      document.getElementById("uStage").textContent = `第 ${cur + 1} / 4 幕`;
+      document.querySelectorAll(".copt").forEach(b => { b.classList.remove("ok", "no"); b.lastChild.textContent = ""; });
+    }
+
+    function loop(now) {
+      const dt = now - last; last = now;
+      if (playing) {
+        elapsed += dt;
+        fills[cur].style.transform = `scaleX(${Math.min(1, elapsed / DURS[cur])})`;
+        if (cur === 3 && !open && elapsed >= 4000) { open = true; wipe.classList.add("open"); }
+        if (elapsed >= DURS[cur]) go(cur + 1);
+      }
+      requestAnimationFrame(loop);
+    }
+
+    document.getElementById("playBtn").onclick = (e) => { playing = !playing; e.target.textContent = playing ? "暂停" : "播放"; };
+    document.getElementById("prevBtn").onclick = () => go(cur - 1);
+    document.getElementById("nextBtn").onclick = () => go(cur + 1);
+    document.getElementById("revealBtn").onclick = () => { open = !open; wipe.classList.toggle("open", open); };
+    document.getElementById("replayBtn").onclick = () => go(0);
+    tracks.forEach(t => t.onclick = () => go(+t.dataset.s));
+    document.getElementById("demoBtn").onclick = (e) => {
+      idx = (idx + 1) % SAMPLES.length; card = SAMPLES[idx];
+      e.target.textContent = `换学科板书 (${idx + 1}/${SAMPLES.length})`;
+      render(card); go(0);
+    };
+
+    render(card); go(0); requestAnimationFrame(loop);
+  </script>
+</body>
+</html>
