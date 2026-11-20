@@ -550,9 +550,7 @@
 
       <div class="key-tip">支持 ← → 翻页 · 空格暂停</div>
 
-      <div class="btn-group-nav">
-        <button class="book-btn" id="demoBtn">切换样例</button>
-      </div>
+      <div class="btn-group-nav"></div>
     </footer>
   </div>
 
@@ -651,7 +649,6 @@
     const playBtn = document.getElementById("playBtn");
     const prevBtn = document.getElementById("prevBtn");
     const nextBtn = document.getElementById("nextBtn");
-    const demoBtn = document.getElementById("demoBtn");
 
     // 经典矢量装饰小图标 (SVG)
     const ICONS = [
@@ -843,15 +840,6 @@
     };
     prevBtn.onclick = () => jumpTo(curPage - 1);
     nextBtn.onclick = () => jumpTo(curPage + 1);
-
-    demoBtn.onclick = () => {
-      sampleIdx = (sampleIdx + 1) % SAMPLES.length;
-      story = SAMPLES[sampleIdx];
-      buildScenes(story);
-      jumpTo(0);
-      playing = true;
-      playBtn.textContent = "暂停";
-    };
 
     // 键盘快捷键监听
     window.addEventListener("keydown", (e) => {

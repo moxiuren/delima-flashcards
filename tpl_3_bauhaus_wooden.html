@@ -224,7 +224,7 @@
       </div>
 
       <footer class="ftr">
-        <button class="btn" id="demoBtn" type="button" style="height:24px;font-size:11px">换学科积木 (1/3)</button>
+        <span></span>
         <span id="uStage">BLOCK 1 / 4</span>
       </footer>
     </section>
@@ -354,11 +354,6 @@
     document.getElementById("revealBtn").onclick = () => { open = !open; iris.classList.toggle("open", open); };
     document.getElementById("replayBtn").onclick = () => go(0);
     tracks.forEach(t => t.onclick = () => go(+t.dataset.s));
-    document.getElementById("demoBtn").onclick = (e) => {
-      idx = (idx + 1) % SAMPLES.length; card = SAMPLES[idx];
-      e.target.textContent = `换学科积木 (${idx + 1}/${SAMPLES.length})`;
-      render(card); go(0);
-    };
 
     render(card); go(0); requestAnimationFrame(loop);
   </script>

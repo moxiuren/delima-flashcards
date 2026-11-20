@@ -578,9 +578,7 @@
 
       <div class="stage-tips">← → 翻幕 · 空格暂停</div>
 
-      <div class="nav-btn-cluster">
-        <button class="theater-btn" id="tDemoBtn">切换剧目</button>
-      </div>
+      <div class="nav-btn-cluster"></div>
     </footer>
   </div>
 
@@ -679,7 +677,6 @@
     const tPlayBtn = document.getElementById("tPlayBtn");
     const tPrevBtn = document.getElementById("tPrevBtn");
     const tNextBtn = document.getElementById("tNextBtn");
-    const tDemoBtn = document.getElementById("tDemoBtn");
 
     // 舞台剪影小矢量图标 (SVG)
     const THEATER_ICONS = [
@@ -863,15 +860,6 @@
     };
     tPrevBtn.onclick = () => showAct(curAct - 1);
     tNextBtn.onclick = () => showAct(curAct + 1);
-
-    tDemoBtn.onclick = () => {
-      dramaIdx = (dramaIdx + 1) % THEATER_SAMPLES.length;
-      drama = THEATER_SAMPLES[dramaIdx];
-      renderTheater(drama);
-      showAct(0);
-      isPlaying = true;
-      tPlayBtn.textContent = "暂停";
-    };
 
     window.addEventListener("keydown", (e) => {
       if (e.key === "ArrowLeft") showAct(curAct - 1);
