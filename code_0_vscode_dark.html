@@ -1,0 +1,1529 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="icon" href="data:," />
+  <title>DELIMa Code Card · VS Code 暗夜编辑器风</title>
+  <style>
+    :root {
+      --bg-outer: #111317;
+      --bg-editor: #1E1E1E;
+      --bg-sidebar: #252526;
+      --bg-tab-bar: #2D2D30;
+      --bg-panel: #18181A;
+      --bg-elevated: #26292E;
+      --border: #3C3C3C;
+      --border-soft: #2E3238;
+      --text-main: #D4D4D4;
+      --text-bright: #F3F4F6;
+      --text-muted: #8E9299;
+      --text-dim: #6A737D;
+
+      /* VS Code Dark+ 语法色 */
+      --syn-blue: #569CD6;
+      --syn-cyan: #4EC9B0;
+      --syn-yellow: #DCDCAA;
+      --syn-orange: #CE9178;
+      --syn-purple: #C586C0;
+      --syn-green: #6A9955;
+      --syn-num: #B5CEA8;
+      --syn-red: #F48771;
+
+      --accent: #007ACC;
+      --accent-bright: #3794FF;
+      --status-bg: #007ACC;
+      --mono: Consolas, "Cascadia Code", "Fira Code", "JetBrains Mono", Menlo, Monaco, monospace;
+      --sans: "Segoe UI", system-ui, -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background:
+        radial-gradient(circle at 18% 12%, rgba(0, 122, 204, 0.16) 0%, transparent 45%),
+        radial-gradient(circle at 85% 88%, rgba(78, 201, 176, 0.12) 0%, transparent 48%),
+        var(--bg-outer);
+      font-family: var(--sans);
+      color: var(--text-main);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .stage-shell {
+      position: relative;
+      width: min(100vw, 100vh, 620px);
+      height: min(100vw, 100vh, 620px);
+      aspect-ratio: 1 / 1;
+      padding: 12px;
+      display: flex;
+    }
+
+    .ide-window {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      background: var(--bg-editor);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      box-shadow:
+        0 20px 50px rgba(0, 0, 0, 0.55),
+        inset 0 1px 0 rgba(255, 255, 255, 0.06);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* 顶部标题栏 + 窗口控制点 */
+    .titlebar {
+      height: 34px;
+      background: #323233;
+      border-bottom: 1px solid #232325;
+      padding: 0 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+
+    .win-dots {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-shrink: 0;
+    }
+
+    .win-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+    }
+    .win-dot.r { background: #FF5F56; }
+    .win-dot.y { background: #FFBD2E; }
+    .win-dot.g { background: #27C93F; }
+
+    .title-crumb {
+      font-family: var(--mono);
+      font-size: 11.5px;
+      color: var(--text-muted);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      min-width: 0;
+    }
+
+    .title-crumb strong {
+      color: var(--text-bright);
+      font-weight: 600;
+    }
+
+    .controls {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      flex-shrink: 0;
+    }
+
+    .ctrl-btn {
+      height: 24px;
+      min-width: 26px;
+      padding: 0 8px;
+      border-radius: 5px;
+      border: 1px solid #454549;
+      background: #252526;
+      color: var(--text-main);
+      font-family: var(--sans);
+      font-size: 11.5px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background-color 0.15s ease, border-color 0.15s ease, transform 0.1s ease;
+    }
+
+    .ctrl-btn:hover {
+      background: #37373D;
+      border-color: var(--accent-bright);
+      color: #FFFFFF;
+    }
+
+    .ctrl-btn:active {
+      transform: translateY(1px);
+    }
+
+    /* 编辑器 Tab 栏 + 进度条 */
+    .tab-header {
+      background: var(--bg-sidebar);
+      border-bottom: 1px solid var(--border-soft);
+      padding: 6px 12px 6px 10px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+
+    .tab-badges {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      min-width: 0;
+    }
+
+    .lang-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 3px 9px;
+      border-radius: 5px;
+      background: rgba(86, 156, 214, 0.16);
+      border: 1px solid rgba(86, 156, 214, 0.45);
+      color: #8CD0FF;
+      font-family: var(--mono);
+      font-size: 11.5px;
+      font-weight: 700;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    .lang-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--syn-cyan);
+      box-shadow: 0 0 6px var(--syn-cyan);
+    }
+
+    .subject-tag {
+      font-size: 11.5px;
+      font-weight: 600;
+      color: var(--syn-yellow);
+      background: rgba(220, 220, 170, 0.1);
+      border: 1px solid rgba(220, 220, 170, 0.25);
+      padding: 3px 8px;
+      border-radius: 5px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .unit-tag {
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--text-muted);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    /* 4 幕分段进度条 */
+    .progress-row {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 6px;
+      padding: 7px 14px 4px;
+      background: var(--bg-editor);
+      flex-shrink: 0;
+    }
+
+    .prog-track {
+      height: 4px;
+      background: #2F3136;
+      border-radius: 2px;
+      overflow: hidden;
+      cursor: pointer;
+    }
+
+    .prog-fill {
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent), var(--syn-cyan));
+      transform-origin: left center;
+      transform: scaleX(0);
+      will-change: transform;
+    }
+
+    .prog-track.done .prog-fill {
+      transform: scaleX(1);
+    }
+
+    /* 主工作区（左侧窄边栏 + 4幕视口） */
+    .workspace {
+      position: relative;
+      flex: 1;
+      min-height: 0;
+      display: flex;
+      overflow: hidden;
+    }
+
+    .activity-rail {
+      width: 34px;
+      background: #28282B;
+      border-right: 1px solid #202022;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 10px 0;
+      gap: 12px;
+      flex-shrink: 0;
+    }
+
+    .rail-icon {
+      width: 22px;
+      height: 22px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #6B7280;
+      border-left: 2px solid transparent;
+      transition: color 0.2s ease, border-color 0.2s ease;
+    }
+
+    .rail-icon.on {
+      color: #FFFFFF;
+      border-left-color: var(--accent-bright);
+    }
+
+    .rail-icon svg {
+      width: 15px;
+      height: 15px;
+      stroke: currentColor;
+      fill: none;
+      stroke-width: 1.8;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .viewport {
+      position: relative;
+      flex: 1;
+      min-width: 0;
+      min-height: 0;
+      padding: 10px 14px 12px;
+      perspective: 1100px;
+    }
+
+    .scene {
+      position: absolute;
+      inset: 10px 14px 12px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      opacity: 0;
+      transform: translateY(14px) scale(0.985);
+      pointer-events: none;
+      transition: opacity 0.36s cubic-bezier(0.22, 1, 0.36, 1), transform 0.38s cubic-bezier(0.22, 1, 0.36, 1);
+      will-change: opacity, transform;
+    }
+
+    .scene.active {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+      pointer-events: auto;
+    }
+
+    .scene.leaving {
+      opacity: 0;
+      transform: translateY(-12px) scale(0.985);
+    }
+
+    .eyebrow {
+      font-family: var(--mono);
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+      color: var(--syn-green);
+      margin-bottom: 8px;
+      flex-shrink: 0;
+    }
+
+    /* 第 1 幕：编辑器核心符号页 */
+    .hero-card {
+      height: 100%;
+      background:
+        radial-gradient(circle at 50% 18%, rgba(55, 148, 255, 0.12) 0%, transparent 55%),
+        var(--bg-panel);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 18px 18px 16px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero-gutter {
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 30px;
+      background: rgba(255, 255, 255, 0.02);
+      border-right: 1px solid #282A2E;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-around;
+      align-items: flex-end;
+      padding: 14px 6px;
+      font-family: var(--mono);
+      font-size: 10px;
+      color: #4B5263;
+      user-select: none;
+      pointer-events: none;
+    }
+
+    .hero-inner {
+      width: 100%;
+      padding-left: 22px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .hero-badge-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .hero-lang-chip {
+      font-family: var(--mono);
+      font-size: 11.5px;
+      font-weight: 700;
+      padding: 3px 10px;
+      border-radius: 999px;
+      background: rgba(78, 201, 176, 0.14);
+      border: 1px solid rgba(78, 201, 176, 0.5);
+      color: var(--syn-cyan);
+    }
+
+    .hero-sub-chip {
+      font-size: 11.5px;
+      color: var(--syn-purple);
+      background: rgba(197, 134, 192, 0.12);
+      border: 1px solid rgba(197, 134, 192, 0.35);
+      padding: 3px 10px;
+      border-radius: 999px;
+    }
+
+    .hero-icon-box {
+      width: 62px;
+      height: 62px;
+      border-radius: 14px;
+      background: #232830;
+      border: 1px solid #394150;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.35);
+      transform: scale(0.88);
+      opacity: 0;
+      transition: transform 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) 0.08s, opacity 0.35s ease 0.08s;
+    }
+
+    .scene.active .hero-icon-box {
+      transform: scale(1);
+      opacity: 1;
+    }
+
+    .hero-icon-box svg {
+      width: 34px;
+      height: 34px;
+      stroke: var(--syn-blue);
+      fill: none;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .hero-word {
+      font-family: var(--mono);
+      font-size: clamp(24px, 5.2vw, 36px);
+      font-weight: 700;
+      color: var(--text-bright);
+      margin: 0;
+      line-height: 1.2;
+      overflow-wrap: anywhere;
+      max-width: 100%;
+    }
+
+    .caret {
+      display: inline-block;
+      width: 3px;
+      height: 0.9em;
+      background: var(--accent-bright);
+      margin-left: 4px;
+      vertical-align: -0.1em;
+      animation: blinkCaret 1.05s steps(1) infinite;
+    }
+
+    @keyframes blinkCaret {
+      0%, 49% { opacity: 1; }
+      50%, 100% { opacity: 0; }
+    }
+
+    .hero-meaning {
+      margin: 0;
+      font-size: 14.5px;
+      font-weight: 500;
+      color: var(--syn-orange);
+      line-height: 1.45;
+      max-width: 92%;
+    }
+
+    .chip-list {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 7px;
+      margin-top: 4px;
+    }
+
+    .chip {
+      font-family: var(--mono);
+      font-size: 12px;
+      font-weight: 600;
+      padding: 6px 10px;
+      border-radius: 6px;
+      background: #25272C;
+      border: 1px solid #3B4048;
+      color: var(--syn-yellow);
+      opacity: 0;
+      transform: translateY(8px);
+      transition: opacity 0.35s ease, transform 0.35s ease;
+    }
+
+    .chip:nth-child(2) { color: var(--syn-cyan); border-color: rgba(78, 201, 176, 0.35); }
+    .chip:nth-child(3) { color: var(--syn-blue); border-color: rgba(86, 156, 214, 0.35); }
+
+    .scene.active .chip:nth-child(1) { transition-delay: 0.16s; opacity: 1; transform: translateY(0); }
+    .scene.active .chip:nth-child(2) { transition-delay: 0.28s; opacity: 1; transform: translateY(0); }
+    .scene.active .chip:nth-child(3) { transition-delay: 0.40s; opacity: 1; transform: translateY(0); }
+
+    /* 第 2 幕：Diff Split 分栏对比 */
+    .vs-wrap {
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+    }
+
+    .vs-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      gap: 10px;
+      flex: 1;
+      min-height: 0;
+    }
+
+    .vs-box {
+      background: var(--bg-panel);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      min-height: 0;
+      overflow: hidden;
+      opacity: 0;
+      transform: translateY(10px);
+      transition: opacity 0.4s ease, transform 0.42s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    .vs-box.left { border-top: 3px solid var(--syn-cyan); }
+    .vs-box.right { border-top: 3px solid var(--syn-purple); }
+
+    .scene.active .vs-box.left { transition-delay: 0.08s; opacity: 1; transform: translateY(0); }
+    .scene.active .vs-box.right { transition-delay: 0.20s; opacity: 1; transform: translateY(0); }
+
+    .vs-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 6px;
+      margin-bottom: 6px;
+    }
+
+    .vs-tag {
+      font-family: var(--mono);
+      font-size: 10px;
+      font-weight: 700;
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+    .vs-box.left .vs-tag { background: rgba(78, 201, 176, 0.16); color: var(--syn-cyan); }
+    .vs-box.right .vs-tag { background: rgba(197, 134, 192, 0.16); color: var(--syn-purple); }
+
+    .vs-term {
+      font-family: var(--mono);
+      font-size: 16.5px;
+      font-weight: 700;
+      color: var(--text-bright);
+      margin: 0 0 5px;
+      overflow-wrap: anywhere;
+    }
+
+    .vs-desc {
+      font-size: 12px;
+      color: var(--text-muted);
+      line-height: 1.45;
+      margin: 0 0 10px;
+    }
+
+    .vs-examples {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .vs-examples li {
+      font-family: var(--mono);
+      font-size: 11.5px;
+      line-height: 1.35;
+      padding: 7px 9px;
+      border-radius: 6px;
+      background: #23252A;
+      border: 1px solid #32363E;
+      color: var(--text-main);
+      overflow-wrap: anywhere;
+    }
+
+    /* 第 3 幕：代码框 + Terminal 输出（支持无 codeSnippet 时平滑退化为句式高亮） */
+    .code-stage {
+      flex: 1;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 9px;
+      justify-content: center;
+    }
+
+    .editor-pane {
+      background: #16181D;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .pane-bar {
+      height: 24px;
+      background: #252526;
+      border-bottom: 1px solid #303237;
+      padding: 0 10px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-family: var(--mono);
+      font-size: 10.5px;
+      color: var(--text-muted);
+    }
+
+    .code-body {
+      padding: 10px 12px;
+      font-family: var(--mono);
+      font-size: 12.5px;
+      line-height: 1.48;
+      color: var(--text-main);
+      margin: 0;
+      white-space: pre-wrap;
+      word-break: break-word;
+      max-height: 145px;
+      overflow: hidden;
+    }
+
+    .code-line {
+      display: flex;
+      gap: 10px;
+    }
+
+    .ln {
+      color: #545B66;
+      user-select: none;
+      min-width: 16px;
+      text-align: right;
+      flex-shrink: 0;
+    }
+
+    .lc {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .tok-kw { color: var(--syn-purple); font-weight: 600; }
+    .tok-type { color: var(--syn-blue); }
+    .tok-fn { color: var(--syn-yellow); }
+    .tok-str { color: var(--syn-orange); }
+    .tok-num { color: var(--syn-num); }
+    .tok-cmt { color: var(--syn-green); font-style: italic; }
+
+    .output-pane {
+      background: #121417;
+      border: 1px solid #2E3440;
+      border-left: 3px solid var(--syn-cyan);
+      border-radius: 6px;
+      padding: 7px 11px;
+      font-family: var(--mono);
+      font-size: 12px;
+      line-height: 1.4;
+      color: var(--syn-cyan);
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    .output-prefix {
+      color: var(--text-muted);
+      margin-right: 6px;
+      user-select: none;
+    }
+
+    /* 退化模式：无 codeSnippet 时的例句聚光框 */
+    .sentence-box {
+      background: #1A1E24;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 16px;
+      font-size: 16px;
+      line-height: 1.6;
+      color: var(--text-bright);
+    }
+
+    .hl {
+      display: inline-block;
+      padding: 0 7px;
+      margin: 0 2px;
+      border-radius: 5px;
+      background: rgba(86, 156, 214, 0.22);
+      border: 1px solid var(--syn-blue);
+      color: #9CDCFE;
+      font-weight: 700;
+    }
+
+    .translation-box {
+      font-size: 12.5px;
+      line-height: 1.48;
+      color: var(--text-main);
+      padding: 8px 11px;
+      background: #22252A;
+      border-left: 3px solid var(--syn-blue);
+      border-radius: 0 6px 6px 0;
+    }
+
+    .tip-box {
+      font-size: 12px;
+      line-height: 1.45;
+      color: var(--syn-yellow);
+      padding: 8px 11px;
+      background: rgba(220, 220, 170, 0.08);
+      border: 1px dashed rgba(220, 220, 170, 0.38);
+      border-radius: 6px;
+    }
+
+    /* 第 4 幕：3D 翻卡答题 */
+    .flip-wrap {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      transform-style: preserve-3d;
+      transition: transform 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+      will-change: transform;
+    }
+
+    .flip-wrap.flipped {
+      transform: rotateY(180deg);
+    }
+
+    .flip-face {
+      position: absolute;
+      inset: 0;
+      backface-visibility: hidden;
+      -webkit-backface-visibility: hidden;
+      background: var(--bg-panel);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 15px 16px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      overflow: hidden;
+    }
+
+    .flip-back {
+      transform: rotateY(180deg);
+      background:
+        radial-gradient(circle at 50% 20%, rgba(78, 201, 176, 0.14) 0%, transparent 60%),
+        #161D1B;
+      border-color: rgba(78, 201, 176, 0.55);
+      justify-content: center;
+      text-align: center;
+      gap: 12px;
+    }
+
+    .quiz-q {
+      font-size: 15px;
+      font-weight: 600;
+      line-height: 1.45;
+      color: var(--text-bright);
+      margin: 4px 0 10px;
+    }
+
+    .opt-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .opt-btn {
+      width: 100%;
+      min-height: 42px;
+      padding: 8px 12px;
+      border-radius: 7px;
+      border: 1px solid #383D47;
+      background: #23262B;
+      color: var(--text-main);
+      font-family: var(--mono);
+      font-size: 13px;
+      font-weight: 600;
+      text-align: left;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      transition: border-color 0.15s ease, background-color 0.15s ease, transform 0.12s ease;
+    }
+
+    .opt-btn:hover {
+      border-color: var(--accent-bright);
+      background: #2A2F37;
+      transform: translateX(2px);
+    }
+
+    .opt-btn.correct {
+      background: rgba(78, 201, 176, 0.16);
+      border-color: var(--syn-cyan);
+      color: #A7F3D0;
+    }
+
+    .opt-btn.wrong {
+      background: rgba(244, 135, 113, 0.15);
+      border-color: var(--syn-red);
+      color: #FCA5A5;
+    }
+
+    .quiz-foot {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      font-size: 11.5px;
+      color: var(--text-muted);
+    }
+
+    .ans-big {
+      font-family: var(--mono);
+      font-size: clamp(20px, 4.4vw, 26px);
+      font-weight: 700;
+      color: var(--syn-cyan);
+      margin: 0;
+    }
+
+    .ans-explain {
+      margin: 0;
+      font-size: 13.5px;
+      line-height: 1.55;
+      color: var(--text-main);
+      padding: 12px 14px;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(78, 201, 176, 0.35);
+      border-radius: 8px;
+    }
+
+    /* 底部 VS Code 状态栏 */
+    .statusbar {
+      height: 24px;
+      background: var(--status-bg);
+      color: #FFFFFF;
+      padding: 0 10px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-family: var(--mono);
+      font-size: 11px;
+      flex-shrink: 0;
+    }
+
+    .status-left, .status-right {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .sample-switch {
+      background: rgba(255, 255, 255, 0.18);
+      border: none;
+      color: #FFFFFF;
+      border-radius: 3px;
+      padding: 1px 6px;
+      font-family: var(--mono);
+      font-size: 10.5px;
+      cursor: pointer;
+    }
+    .sample-switch:hover { background: rgba(255, 255, 255, 0.28); }
+
+    /* Confetti 彩纸屑 */
+    .confetti-layer {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      overflow: hidden;
+      z-index: 20;
+    }
+
+    .confetti-dot {
+      position: absolute;
+      width: 7px;
+      height: 7px;
+      border-radius: 2px;
+      opacity: 0;
+      animation: confettiPop 0.9s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+    }
+
+    @keyframes confettiPop {
+      0% { opacity: 1; transform: translate(0, 0) scale(0.8) rotate(0deg); }
+      100% { opacity: 0; transform: translate(var(--dx), var(--dy)) scale(1.1) rotate(var(--deg)); }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .scene, .chip, .vs-box, .flip-wrap, .hero-icon-box, .caret {
+        transition: none !important;
+        animation: none !important;
+      }
+      .scene.active .chip, .scene.active .vs-box, .scene.active .hero-icon-box {
+        opacity: 1;
+        transform: none;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="stage-shell">
+    <section class="ide-window" aria-label="VS Code 暗夜编程动画闪卡">
+      <div class="confetti-layer" id="confettiLayer" aria-hidden="true"></div>
+
+      <header class="titlebar">
+        <div class="win-dots" aria-hidden="true">
+          <span class="win-dot r"></span>
+          <span class="win-dot y"></span>
+          <span class="win-dot g"></span>
+        </div>
+        <div class="title-crumb">delima-code / <strong id="uiFileTitle">flashcard.py</strong></div>
+        <div class="controls">
+          <button class="ctrl-btn" id="prevBtn" type="button" title="上一幕">&lt;</button>
+          <button class="ctrl-btn" id="playBtn" type="button">暂停</button>
+          <button class="ctrl-btn" id="nextBtn" type="button" title="下一幕">&gt;</button>
+        </div>
+      </header>
+
+      <div class="tab-header">
+        <div class="tab-badges">
+          <span class="lang-pill"><span class="lang-dot"></span><span id="uiLang">Python</span></span>
+          <span class="subject-tag" id="uiSubject">Asas Sains Komputer</span>
+        </div>
+        <span class="unit-tag" id="uiUnit">Struktur Kawalan</span>
+      </div>
+
+      <div class="progress-row" id="progressRow">
+        <div class="prog-track" data-step="0" title="第 1 幕：核心概念"><div class="prog-fill"></div></div>
+        <div class="prog-track" data-step="1" title="第 2 幕：Diff 对比"><div class="prog-fill"></div></div>
+        <div class="prog-track" data-step="2" title="第 3 幕：代码运行"><div class="prog-fill"></div></div>
+        <div class="prog-track" data-step="3" title="第 4 幕：翻卡自测"><div class="prog-fill"></div></div>
+      </div>
+
+      <div class="workspace">
+        <aside class="activity-rail" aria-hidden="true">
+          <div class="rail-icon on" data-rail="0">
+            <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+          </div>
+          <div class="rail-icon" data-rail="1">
+            <svg viewBox="0 0 24 24"><line x1="6" y1="3" x2="6" y2="15"/><circle cx="18" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M18 9a9 9 0 0 1-9 9"/></svg>
+          </div>
+          <div class="rail-icon" data-rail="2">
+            <svg viewBox="0 0 24 24"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+          </div>
+          <div class="rail-icon" data-rail="3">
+            <svg viewBox="0 0 24 24"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+          </div>
+        </aside>
+
+        <div class="viewport" id="viewport">
+          <!-- 第 1 幕 -->
+          <article class="scene active" data-scene="0">
+            <div class="hero-card">
+              <div class="hero-gutter" aria-hidden="true">
+                <span>01</span><span>02</span><span>03</span><span>04</span><span>05</span><span>06</span><span>07</span>
+              </div>
+              <div class="hero-inner">
+                <div class="hero-icon-box" id="uiVisual" aria-hidden="true"></div>
+                <div class="hero-badge-row">
+                  <span class="hero-lang-chip" id="uiHeroLang">Python</span>
+                  <span class="hero-sub-chip" id="uiHeroMeta">01 · 核心符号</span>
+                </div>
+                <h1 class="hero-word"><span id="uiHeroWord"></span><span class="caret" aria-hidden="true"></span></h1>
+                <p class="hero-meaning" id="uiHeroMeaning"></p>
+                <div class="chip-list" id="uiChips"></div>
+              </div>
+            </div>
+          </article>
+
+          <!-- 第 2 幕 -->
+          <article class="scene" data-scene="1">
+            <div class="vs-wrap">
+              <div class="eyebrow">// 2 / 4 · SPLIT DIFF · 概念与语法对比</div>
+              <div class="vs-grid">
+                <div class="vs-box left">
+                  <div>
+                    <div class="vs-head"><span class="vs-tag">LEFT · A</span></div>
+                    <h2 class="vs-term" id="uiLeftTerm"></h2>
+                    <p class="vs-desc" id="uiLeftDesc"></p>
+                  </div>
+                  <ul class="vs-examples" id="uiLeftExamples"></ul>
+                </div>
+                <div class="vs-box right">
+                  <div>
+                    <div class="vs-head"><span class="vs-tag">RIGHT · B</span></div>
+                    <h2 class="vs-term" id="uiRightTerm"></h2>
+                    <p class="vs-desc" id="uiRightDesc"></p>
+                  </div>
+                  <ul class="vs-examples" id="uiRightExamples"></ul>
+                </div>
+              </div>
+            </div>
+          </article>
+
+          <!-- 第 3 幕 -->
+          <article class="scene" data-scene="2">
+            <div class="vs-wrap">
+              <div class="eyebrow" id="uiScene3Label">// 3 / 4 · RUN &amp; OUTPUT · 代码实操</div>
+              <div class="code-stage">
+                <div class="editor-pane" id="uiCodePane">
+                  <div class="pane-bar">
+                    <span id="uiCodeFilename">snippet.code</span>
+                    <span>UTF-8</span>
+                  </div>
+                  <div class="code-body" id="uiCodeBody"></div>
+                </div>
+                <div class="output-pane" id="uiOutputPane"><span class="output-prefix">OUT &gt;</span><span id="uiCodeOutput"></span></div>
+                <div class="sentence-box" id="uiSentencePane" style="display:none;">
+                  <span id="uiSentence"></span>
+                </div>
+                <div class="translation-box" id="uiTranslation"></div>
+                <div class="tip-box" id="uiTip"></div>
+              </div>
+            </div>
+          </article>
+
+          <!-- 第 4 幕 -->
+          <article class="scene" data-scene="3">
+            <div class="flip-wrap" id="flipWrap">
+              <div class="flip-face">
+                <div>
+                  <div class="eyebrow">// 4 / 4 · QUICK QUIZ · 调试测验</div>
+                  <div class="quiz-q" id="uiQuizQ"></div>
+                  <div class="opt-list" id="uiQuizOpts"></div>
+                </div>
+                <div class="quiz-foot">
+                  <span>选择正确选项或 4 秒后自动翻面</span>
+                  <button class="ctrl-btn" id="flipNowBtn" type="button">看答案</button>
+                </div>
+              </div>
+              <div class="flip-face flip-back">
+                <div class="eyebrow" style="color:var(--syn-cyan);margin-bottom:0;">[TEST PASSED] · 标准答案</div>
+                <p class="ans-big" id="uiAnsText"></p>
+                <p class="ans-explain" id="uiAnsExplain"></p>
+                <div>
+                  <button class="ctrl-btn" id="replayBtn" type="button">再看一遍</button>
+                </div>
+              </div>
+            </div>
+          </article>
+        </div>
+      </div>
+
+      <footer class="statusbar">
+        <div class="status-left">
+          <span>main*</span>
+          <span id="uiStatusLang">Python</span>
+          <button class="sample-switch" id="sampleBtn" type="button" title="切换内置示例">示例 1/3</button>
+        </div>
+        <div class="status-right">
+          <span>UTF-8</span>
+          <span id="uiStageLabel">第 1 / 4 幕</span>
+        </div>
+      </footer>
+    </section>
+  </main>
+
+  <script>
+    const SAMPLES = [
+      {
+        id: "code_vs_01",
+        type: "code",
+        lang: "Python",
+        subject: "Asas Sains Komputer",
+        unit: "List & Iteration",
+        word: "List Comprehension",
+        meaning: "列表推导式：用一行表达式高效生成并过滤列表",
+        chips: ["[x*2 for x in arr]", "带条件 if 过滤", "比 append 循环更简洁"],
+        iconSvg: `<svg viewBox="0 0 24 24"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/><line x1="13" y1="4" x2="11" y2="20"/></svg>`,
+        compare: {
+          left: {
+            term: "传统 for + append",
+            desc: "先建空列表，再逐行追加元素",
+            items: ["res = []", "for n in nums: if n%2==0:", "  res.append(n*n)"]
+          },
+          right: {
+            term: "List Comprehension",
+            desc: "单行内聚映射与过滤逻辑",
+            items: ["[n*n for n in nums if n%2==0]", "执行速度通常更快", "避免临时变量污染"]
+          }
+        },
+        codeSnippet: "nums = [1, 2, 3, 4, 5]\nevens = [n * 10 for n in nums if n % 2 == 0]\nprint(evens)",
+        codeOutput: "[20, 40]",
+        sentenceBefore: "Gunakan ",
+        sentenceHighlight: "[n * 10 for n in nums]",
+        sentenceAfter: " untuk membina senarai baharu dengan ringkas.",
+        translation: "中文解析：先遍历 nums 中的每个 n，满足 n % 2 == 0 时计算 n * 10 并放入新列表。",
+        tip: "避坑口诀：过滤写末尾（for ... if ...）；三元转换写前面（a if cond else b for ...）！",
+        quiz: {
+          question: "执行 [x + 1 for x in [1, 2, 3] if x > 1] 的结果是？",
+          options: ["A. [2, 3, 4]", "B. [3, 4]", "C. [2, 3]"],
+          answerIndex: 1,
+          answerText: "B. [3, 4]",
+          explain: "先过滤 x > 1 得到 2 和 3，再分别执行 x + 1，最终输出 [3, 4]。"
+        }
+      },
+      {
+        id: "code_vs_02",
+        type: "code",
+        lang: "JavaScript",
+        subject: "Web Frontend",
+        unit: "Async Programming",
+        word: "async / await",
+        meaning: "异步等待语法糖：用同步书写方式处理 Promise",
+        chips: ["async 返回 Promise", "await 暂停当前函数", "try/catch 捕获异常"],
+        iconSvg: `<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15.5 14"/></svg>`,
+        compare: {
+          left: {
+            term: "Promise .then()",
+            desc: "链式回调，多层嵌套易显冗长",
+            items: ["fetch(url).then(r => r.json())", ".then(data => render(data))", ".catch(err => log(err))"]
+          },
+          right: {
+            term: "async / await",
+            desc: "线性流程，可读性接近同步代码",
+            items: ["const r = await fetch(url);", "const data = await r.json();", "try { ... } catch (err) { ... }"]
+          }
+        },
+        codeSnippet: "async function loadScore() {\n  const val = await Promise.resolve(95);\n  return `Score: ${val}`;\n}",
+        codeOutput: "Promise { <fulfilled>: 'Score: 95' }",
+        sentenceBefore: "Kata kunci ",
+        sentenceHighlight: "await",
+        sentenceAfter: " hanya sah digunakan di dalam fungsi async.",
+        translation: "中文解析：async 函数必定返回 Promise，await 会等待右侧异步任务完成后再继续下一行。",
+        tip: "记忆口诀：无 async 不 await；多个互不依赖的请求改用 Promise.all() 并发更快！",
+        quiz: {
+          question: "使用 async/await 时，捕获异步错误最推荐的方式是？",
+          options: ["A. try { await fn() } catch (e) {}", "B. if (err) return", "C. throw await fn()"],
+          answerIndex: 0,
+          answerText: "A. try { await fn() } catch (e) {}",
+          explain: "await 会把 rejected 状态的 Promise 转为抛出异常，直接用 try/catch 即可捕获。"
+        }
+      },
+      {
+        id: "code_vs_03",
+        type: "code",
+        lang: "HTML5",
+        subject: "Rekabentuk Web",
+        unit: "Semantic Tags",
+        word: "Semantic HTML",
+        meaning: "语义化标签：用自带含义的标签代替无意义 div",
+        chips: ["<header> / <main>", "<article> / <nav>", "提升 SEO 与无障碍"],
+        iconSvg: `<svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="9" x2="9" y2="20"/></svg>`,
+        compare: {
+          left: {
+            term: "全 div 嵌套",
+            desc: "读屏器与爬虫无法识别区块角色",
+            items: ["<div class='top'>", "<div class='menu'>", "<div class='content'>"]
+          },
+          right: {
+            term: "语义化标签",
+            desc: "标签名直接声明页面结构角色",
+            items: ["<header> 页眉", "<nav> 导航栏", "<main> 核心正文"]
+          }
+        },
+        codeSnippet: "",
+        codeOutput: "",
+        sentenceBefore: "Gunakan tag ",
+        sentenceHighlight: "<main>",
+        sentenceAfter: " untuk membungkus kandungan utama halaman web.",
+        translation: "中文解析：用 <main> 包裹页面唯一核心内容，让搜索引擎和屏幕阅读器精准定位主内容。",
+        tip: "考点注意：一个页面通常只应有一个可见的 <main>，而 <section> 可以有多个！",
+        quiz: {
+          question: "以下哪个 HTML5 标签专门用于表示页面主导航链接区域？",
+          options: ["A. <aside>", "B. <nav>", "C. <footer>"],
+          answerIndex: 1,
+          answerText: "B. <nav>",
+          explain: "<nav>（Navigation）专用于主导航菜单链接，而 <aside> 用于侧边栏，<footer> 用于页脚。"
+        }
+      }
+    ];
+
+    const DEFAULT_CARD = SAMPLES[0];
+
+    function decodeCardParam(raw) {
+      let b64 = raw.replace(/-/g, "+").replace(/_/g, "/");
+      while (b64.length % 4) b64 += "=";
+      const bin = atob(b64);
+      const bytes = Uint8Array.from(bin, (c) => c.charCodeAt(0));
+      return JSON.parse(new TextDecoder().decode(bytes));
+    }
+
+    function loadCardData() {
+      try {
+        const params = new URLSearchParams(location.search);
+        const raw = params.get("d");
+        if (!raw) return { card: DEFAULT_CARD, fromQuery: false };
+        const parsed = decodeCardParam(raw);
+        const merged = {
+          ...DEFAULT_CARD,
+          ...parsed,
+          lang: parsed.lang || DEFAULT_CARD.lang,
+          iconSvg: parsed.iconSvg || DEFAULT_CARD.iconSvg,
+          chips: Array.isArray(parsed.chips) ? parsed.chips : DEFAULT_CARD.chips,
+          codeSnippet: typeof parsed.codeSnippet === "string" ? parsed.codeSnippet : "",
+          codeOutput: typeof parsed.codeOutput === "string" ? parsed.codeOutput : "",
+          compare: {
+            left: { ...DEFAULT_CARD.compare.left, ...((parsed.compare && parsed.compare.left) || {}) },
+            right: { ...DEFAULT_CARD.compare.right, ...((parsed.compare && parsed.compare.right) || {}) }
+          },
+          quiz: { ...DEFAULT_CARD.quiz, ...(parsed.quiz || {}) }
+        };
+        return { card: merged, fromQuery: true };
+      } catch (e) {
+        return { card: DEFAULT_CARD, fromQuery: false };
+      }
+    }
+
+    const loaded = loadCardData();
+    let sampleIdx = 0;
+    let card = loaded.card;
+
+    const sampleBtn = document.getElementById("sampleBtn");
+    if (loaded.fromQuery) {
+      sampleBtn.style.display = "none";
+    }
+
+    function escapeHtml(str) {
+      return str
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
+    }
+
+    function highlightCodeLine(line) {
+      const tokens = [];
+      const regex = /(#.*$|\/\/.*$|`[^`]*`|'[^']*'|"[^"]*"|\b(?:def|return|if|else|elif|for|in|while|async|await|const|let|var|function|import|from|class|true|false|null|None|True|False|AND|OR|NOT)\b|\b(?:print|len|range|fetch|console|Promise|resolve)\b|\b\d+(?:\.\d+)?\b)/g;
+      let last = 0;
+      let m;
+      while ((m = regex.exec(line)) !== null) {
+        if (m.index > last) tokens.push(escapeHtml(line.slice(last, m.index)));
+        const val = m[0];
+        let cls = "tok-type";
+        if (val.startsWith("#") || val.startsWith("//")) cls = "tok-cmt";
+        else if (val.startsWith("'") || val.startsWith('"') || val.startsWith("`")) cls = "tok-str";
+        else if (/^\d/.test(val)) cls = "tok-num";
+        else if (/^(?:print|len|range|fetch|console|Promise|resolve)$/.test(val)) cls = "tok-fn";
+        else cls = "tok-kw";
+        tokens.push(`<span class="${cls}">${escapeHtml(val)}</span>`);
+        last = regex.lastIndex;
+      }
+      if (last < line.length) tokens.push(escapeHtml(line.slice(last)));
+      return tokens.join("") || "&nbsp;";
+    }
+
+    function langExt(lang) {
+      const l = String(lang || "").toLowerCase();
+      if (l.includes("python")) return "py";
+      if (l.includes("javascript") || l === "js") return "js";
+      if (l.includes("html")) return "html";
+      if (l.includes("css")) return "css";
+      if (l.includes("sql")) return "sql";
+      return "code";
+    }
+
+    function playChime() {
+      try {
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        [587.33, 739.99, 880].forEach((freq, i) => {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = "triangle";
+          osc.frequency.value = freq;
+          gain.gain.setValueAtTime(0.055, ctx.currentTime + i * 0.065);
+          gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + i * 0.065 + 0.22);
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start(ctx.currentTime + i * 0.065);
+          osc.stop(ctx.currentTime + i * 0.065 + 0.24);
+        });
+      } catch (_) {}
+    }
+
+    function burstConfetti() {
+      const layer = document.getElementById("confettiLayer");
+      const colors = ["#569CD6", "#4EC9B0", "#DCDCAA", "#C586C0", "#CE9178"];
+      for (let i = 0; i < 22; i++) {
+        const dot = document.createElement("span");
+        dot.className = "confetti-dot";
+        dot.style.left = "50%";
+        dot.style.top = "52%";
+        dot.style.background = colors[i % colors.length];
+        const ang = (Math.PI * 2 * i) / 22 + (Math.random() - 0.5) * 0.28;
+        const dist = 80 + Math.random() * 145;
+        dot.style.setProperty("--dx", `${Math.cos(ang) * dist}px`);
+        dot.style.setProperty("--dy", `${Math.sin(ang) * dist}px`);
+        dot.style.setProperty("--deg", `${Math.round(Math.random() * 360)}deg`);
+        layer.appendChild(dot);
+        setTimeout(() => dot.remove(), 950);
+      }
+    }
+
+    function renderCard(c) {
+      const ext = langExt(c.lang);
+      const slug = String(c.word || "card").toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_|_$/g, "") || "card";
+      document.getElementById("uiFileTitle").textContent = `${slug}.${ext}`;
+      document.getElementById("uiLang").textContent = c.lang || "Code";
+      document.getElementById("uiStatusLang").textContent = c.lang || "Code";
+      document.getElementById("uiHeroLang").textContent = c.lang || "Code";
+      document.getElementById("uiSubject").textContent = c.subject || "";
+      document.getElementById("uiUnit").textContent = c.unit || "";
+      document.getElementById("uiHeroMeta").textContent = `${c.subject || "Code"} · ${c.unit || "Concept"}`;
+      document.getElementById("uiVisual").innerHTML = c.iconSvg || SAMPLES[0].iconSvg;
+      document.getElementById("uiHeroWord").textContent = c.word || "";
+      document.getElementById("uiHeroMeaning").textContent = c.meaning || "";
+
+      const chipsEl = document.getElementById("uiChips");
+      chipsEl.innerHTML = "";
+      (c.chips || []).slice(0, 3).forEach((txt) => {
+        const span = document.createElement("span");
+        span.className = "chip";
+        span.textContent = txt;
+        chipsEl.appendChild(span);
+      });
+
+      document.getElementById("uiLeftTerm").textContent = c.compare.left.term || "";
+      document.getElementById("uiLeftDesc").textContent = c.compare.left.desc || "";
+      const leftUl = document.getElementById("uiLeftExamples");
+      leftUl.innerHTML = "";
+      (c.compare.left.items || []).forEach((it) => {
+        const li = document.createElement("li");
+        li.textContent = it;
+        leftUl.appendChild(li);
+      });
+
+      document.getElementById("uiRightTerm").textContent = c.compare.right.term || "";
+      document.getElementById("uiRightDesc").textContent = c.compare.right.desc || "";
+      const rightUl = document.getElementById("uiRightExamples");
+      rightUl.innerHTML = "";
+      (c.compare.right.items || []).forEach((it) => {
+        const li = document.createElement("li");
+        li.textContent = it;
+        rightUl.appendChild(li);
+      });
+
+      const hasCode = Boolean(c.codeSnippet && c.codeSnippet.trim());
+      const codePane = document.getElementById("uiCodePane");
+      const outPane = document.getElementById("uiOutputPane");
+      const sentPane = document.getElementById("uiSentencePane");
+
+      if (hasCode) {
+        document.getElementById("uiScene3Label").textContent = "// 3 / 4 · RUN & OUTPUT · 代码实操";
+        codePane.style.display = "flex";
+        sentPane.style.display = "none";
+        document.getElementById("uiCodeFilename").textContent = `${slug}.${ext}`;
+        const lines = c.codeSnippet.replace(/\r\n/g, "\n").split("\n");
+        const bodyEl = document.getElementById("uiCodeBody");
+        bodyEl.innerHTML = lines
+          .map((ln, idx) => `<div class="code-line"><span class="ln">${idx + 1}</span><span class="lc">${highlightCodeLine(ln)}</span></div>`)
+          .join("");
+        if (c.codeOutput && c.codeOutput.trim()) {
+          outPane.style.display = "block";
+          document.getElementById("uiCodeOutput").textContent = c.codeOutput;
+        } else {
+          outPane.style.display = "none";
+        }
+      } else {
+        document.getElementById("uiScene3Label").textContent = "// 3 / 4 · CONTEXT · 关键例句聚光";
+        codePane.style.display = "none";
+        outPane.style.display = "none";
+        sentPane.style.display = "block";
+        const sentEl = document.getElementById("uiSentence");
+        sentEl.innerHTML = "";
+        sentEl.appendChild(document.createTextNode(c.sentenceBefore || ""));
+        const hl = document.createElement("span");
+        hl.className = "hl";
+        hl.textContent = c.sentenceHighlight || "";
+        sentEl.appendChild(hl);
+        sentEl.appendChild(document.createTextNode(c.sentenceAfter || ""));
+      }
+
+      document.getElementById("uiTranslation").textContent = c.translation || "";
+      document.getElementById("uiTip").textContent = c.tip || "";
+
+      document.getElementById("uiQuizQ").textContent = c.quiz.question || "";
+      document.getElementById("uiAnsText").textContent = c.quiz.answerText || "";
+      document.getElementById("uiAnsExplain").textContent = c.quiz.explain || "";
+
+      const optsEl = document.getElementById("uiQuizOpts");
+      optsEl.innerHTML = "";
+      (c.quiz.options || []).forEach((opt, idx) => {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "opt-btn";
+        btn.innerHTML = `<span></span><span></span>`;
+        btn.firstElementChild.textContent = opt;
+        btn.addEventListener("click", () => handleAnswer(idx, btn));
+        optsEl.appendChild(btn);
+      });
+    }
+
+    const DURATIONS = [4200, 4600, 5000, 7200];
+    const scenes = Array.from(document.querySelectorAll(".scene"));
+    const tracks = Array.from(document.querySelectorAll(".prog-track"));
+    const fills = tracks.map((t) => t.querySelector(".prog-fill"));
+    const rails = Array.from(document.querySelectorAll(".rail-icon"));
+    const flipWrap = document.getElementById("flipWrap");
+    const playBtn = document.getElementById("playBtn");
+    const stageLabel = document.getElementById("uiStageLabel");
+
+    let current = 0;
+    let elapsed = 0;
+    let playing = !window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    let flipped = false;
+    let lastTick = performance.now();
+
+    function updatePlayLabel() {
+      playBtn.textContent = playing ? "暂停" : "播放";
+    }
+
+    function setScene(nextIdx) {
+      const prevIdx = current;
+      current = (nextIdx + scenes.length) % scenes.length;
+      elapsed = 0;
+      flipped = false;
+      flipWrap.classList.remove("flipped");
+
+      scenes.forEach((s, i) => {
+        s.classList.remove("active", "leaving");
+        if (i === current) s.classList.add("active");
+        else if (i === prevIdx && prevIdx !== current) s.classList.add("leaving");
+      });
+
+      tracks.forEach((t, i) => {
+        t.classList.toggle("done", i < current);
+        fills[i].style.transform = i < current ? "scaleX(1)" : "scaleX(0)";
+      });
+
+      rails.forEach((r, i) => r.classList.toggle("on", i === current));
+      stageLabel.textContent = `第 ${current + 1} / ${scenes.length} 幕`;
+      document.querySelectorAll(".opt-btn").forEach((b) => {
+        b.classList.remove("correct", "wrong");
+        b.lastElementChild.textContent = "";
+      });
+    }
+
+    function handleAnswer(idx, btn) {
+      const ok = idx === card.quiz.answerIndex;
+      btn.classList.add(ok ? "correct" : "wrong");
+      btn.lastElementChild.textContent = ok ? "OK" : "Retry";
+      if (ok) {
+        playChime();
+        burstConfetti();
+        setTimeout(() => {
+          flipped = true;
+          flipWrap.classList.add("flipped");
+        }, 550);
+      }
+    }
+
+    function tick(now) {
+      const dt = now - lastTick;
+      lastTick = now;
+
+      if (playing) {
+        elapsed += dt;
+        const dur = DURATIONS[current];
+        const ratio = Math.min(1, elapsed / dur);
+        fills[current].style.transform = `scaleX(${ratio})`;
+
+        if (current === 3 && !flipped && elapsed >= 4000) {
+          flipped = true;
+          flipWrap.classList.add("flipped");
+        }
+        if (elapsed >= dur) {
+          setScene(current + 1);
+        }
+      }
+      requestAnimationFrame(tick);
+    }
+
+    playBtn.addEventListener("click", () => {
+      playing = !playing;
+      updatePlayLabel();
+    });
+    document.getElementById("prevBtn").addEventListener("click", () => setScene(current - 1));
+    document.getElementById("nextBtn").addEventListener("click", () => setScene(current + 1));
+    document.getElementById("flipNowBtn").addEventListener("click", () => {
+      flipped = !flipped;
+      flipWrap.classList.toggle("flipped", flipped);
+    });
+    document.getElementById("replayBtn").addEventListener("click", () => setScene(0));
+    tracks.forEach((t) => {
+      t.addEventListener("click", () => setScene(Number(t.dataset.step)));
+    });
+    sampleBtn.addEventListener("click", () => {
+      sampleIdx = (sampleIdx + 1) % SAMPLES.length;
+      card = SAMPLES[sampleIdx];
+      sampleBtn.textContent = `示例 ${sampleIdx + 1}/${SAMPLES.length}`;
+      renderCard(card);
+      setScene(0);
+    });
+
+    renderCard(card);
+    updatePlayLabel();
+    setScene(0);
+    requestAnimationFrame(tick);
+  </script>
+</body>
+</html>

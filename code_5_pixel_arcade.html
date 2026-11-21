@@ -1,0 +1,1346 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="icon" href="data:,">
+  <title>DELIMa Code Card · 复古像素掌机闯关风</title>
+  <style>
+    :root {
+      --desk-bg: #DCE6DE;
+      --shell-bg: #F3EEDB;
+      --shell-hi: #FFFDF6;
+      --shell-sh: #CFC5A6;
+      --bezel-bg: #586475;
+      --bezel-dark: #37414E;
+
+      /* 明快日光液晶屏配色 */
+      --lcd-bg: #ECF7D6;
+      --lcd-panel: #F8FCEB;
+      --lcd-tint: #DFF0C0;
+      --lcd-ink: #19301E;
+      --lcd-muted: #4B694E;
+      --lcd-line: #315338;
+
+      --px-blue: #2D6CDF;
+      --px-blue-bg: #DCEAFF;
+      --px-orange: #DF5A20;
+      --px-orange-bg: #FFE6D8;
+      --px-gold: #D18700;
+      --px-gold-bg: #FFF3C4;
+      --px-green: #228B3B;
+      --px-green-bg: #D5F5DC;
+      --px-red: #D62839;
+
+      --mono: ui-monospace, "Cascadia Mono", "Consolas", "Courier New", monospace;
+      --sans: "Segoe UI", "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background:
+        repeating-linear-gradient(
+          0deg,
+          rgba(255, 255, 255, 0.25) 0px,
+          rgba(255, 255, 255, 0.25) 2px,
+          transparent 2px,
+          transparent 6px
+        ),
+        var(--desk-bg);
+      font-family: var(--sans);
+      color: var(--lcd-ink);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* 1:1 正方形舞台 */
+    .stage-shell {
+      position: relative;
+      width: min(100vw, 100vh, 620px);
+      height: min(100vw, 100vh, 620px);
+      aspect-ratio: 1 / 1;
+      padding: 10px;
+      overflow: hidden;
+      display: flex;
+    }
+
+    /* 明快复古奶油掌机机身 */
+    .console-body {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      background: var(--shell-bg);
+      border: 3px solid #3A424E;
+      border-radius: 14px 14px 36px 14px;
+      box-shadow:
+        inset 4px 4px 0 var(--shell-hi),
+        inset -4px -4px 0 var(--shell-sh),
+        0 8px 0 #8E97A2;
+      padding: 10px 12px 10px;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* 掌机顶部铭牌 + 电源灯 + EXP 进度条 */
+    .console-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 8px;
+      flex-shrink: 0;
+    }
+
+    .power-led {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-family: var(--mono);
+      font-size: 10.5px;
+      font-weight: 800;
+      color: #49525E;
+      letter-spacing: 0.6px;
+      flex-shrink: 0;
+    }
+
+    .led-dot {
+      width: 9px;
+      height: 9px;
+      background: #FF4D4D;
+      border: 1.5px solid #7C1515;
+      box-shadow: 0 0 6px rgba(255, 77, 77, 0.7);
+      display: inline-block;
+    }
+
+    .progress-row {
+      flex: 1;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 5px;
+    }
+
+    .prog-track {
+      height: 10px;
+      background: #D6CEB5;
+      border: 2px solid #3A424E;
+      overflow: hidden;
+      cursor: pointer;
+    }
+
+    .prog-fill {
+      width: 100%;
+      height: 100%;
+      background: #22B14C;
+      transform-origin: left center;
+      transform: scaleX(0);
+      will-change: transform;
+    }
+
+    .prog-track.done .prog-fill {
+      transform: scaleX(1);
+    }
+
+    .console-logo {
+      font-family: var(--mono);
+      font-size: 11px;
+      font-weight: 900;
+      color: #3A424E;
+      letter-spacing: 0.5px;
+      flex-shrink: 0;
+    }
+
+    /* 掌机屏幕外框 Bezel */
+    .screen-bezel {
+      flex: 1;
+      min-height: 0;
+      background: var(--bezel-bg);
+      border: 3px solid var(--bezel-dark);
+      border-radius: 10px 10px 24px 10px;
+      padding: 8px;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* 明快日光液晶屏 */
+    .lcd-screen {
+      position: relative;
+      flex: 1;
+      min-height: 0;
+      background-color: var(--lcd-bg);
+      background-image:
+        linear-gradient(rgba(25, 48, 30, 0.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(25, 48, 30, 0.04) 1px, transparent 1px);
+      background-size: 4px 4px;
+      border: 2.5px solid var(--lcd-line);
+      padding: 10px 12px;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* 屏幕顶部状态栏 */
+    .lcd-hud {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 6px;
+      padding-bottom: 7px;
+      margin-bottom: 8px;
+      border-bottom: 2px dashed var(--lcd-line);
+      flex-shrink: 0;
+    }
+
+    .hud-left {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      min-width: 0;
+    }
+
+    .lang-tag {
+      background: var(--lcd-ink);
+      color: var(--lcd-bg);
+      font-family: var(--mono);
+      font-size: 11px;
+      font-weight: 800;
+      padding: 2px 7px;
+      flex-shrink: 0;
+    }
+
+    .badge {
+      font-family: var(--mono);
+      font-size: 11px;
+      font-weight: 800;
+      color: var(--px-blue);
+      background: var(--px-blue-bg);
+      border: 1.5px solid var(--px-blue);
+      padding: 1px 6px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 140px;
+    }
+
+    .unit-tag {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--lcd-muted);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 130px;
+    }
+
+    .hud-stage {
+      font-family: var(--mono);
+      font-size: 11px;
+      font-weight: 800;
+      color: var(--lcd-ink);
+      flex-shrink: 0;
+    }
+
+    /* 4 幕视口 */
+    .viewport {
+      position: relative;
+      flex: 1;
+      min-height: 0;
+      perspective: 1100px;
+      overflow: hidden;
+    }
+
+    .scene {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      opacity: 0;
+      transform: translateY(8px);
+      pointer-events: none;
+      transition: opacity 0.25s steps(5), transform 0.28s steps(6);
+      overflow: hidden;
+    }
+
+    .scene.active {
+      opacity: 1;
+      transform: translateY(0);
+      pointer-events: auto;
+    }
+
+    .scene.leaving {
+      opacity: 0;
+      transform: translateY(-8px);
+    }
+
+    .quest-bar {
+      font-family: var(--mono);
+      font-size: 11px;
+      font-weight: 800;
+      color: var(--px-orange);
+      margin-bottom: 7px;
+      flex-shrink: 0;
+    }
+
+    /* 第 1 幕：RPG 图鉴面板 */
+    .rpg-hero {
+      flex: 1;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 11px;
+    }
+
+    .sprite-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: var(--lcd-panel);
+      border: 2.5px solid var(--lcd-ink);
+      box-shadow: 4px 4px 0 var(--lcd-line);
+      padding: 12px;
+    }
+
+    .pixel-sprite {
+      width: 60px;
+      height: 60px;
+      background: var(--px-gold-bg);
+      border: 2px solid var(--lcd-ink);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .pixel-sprite svg {
+      width: 38px;
+      height: 38px;
+      stroke: var(--lcd-ink);
+      fill: none;
+      stroke-width: 2.4;
+      stroke-linecap: square;
+      stroke-linejoin: miter;
+    }
+
+    .hero-word {
+      margin: 0;
+      font-family: var(--mono);
+      font-size: clamp(20px, 4.8vw, 30px);
+      font-weight: 900;
+      line-height: 1.2;
+      color: var(--lcd-ink);
+      overflow-wrap: anywhere;
+    }
+
+    /* RPG 双线对话框 */
+    .rpg-dialog {
+      background: #FFFFFF;
+      border: 2.5px solid var(--lcd-ink);
+      box-shadow: inset 0 0 0 2px #CFE4AF, 4px 4px 0 var(--lcd-line);
+      padding: 11px 13px;
+    }
+
+    .hero-sub {
+      margin: 0;
+      font-size: 13.5px;
+      font-weight: 700;
+      line-height: 1.5;
+      color: var(--lcd-ink);
+    }
+
+    /* 技能装备槽 */
+    .chip-list {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+    }
+
+    .chip {
+      padding: 7px 6px;
+      background: var(--px-gold-bg);
+      border: 2px solid var(--lcd-ink);
+      box-shadow: 2px 2px 0 var(--lcd-line);
+      font-size: 11.5px;
+      font-weight: 800;
+      text-align: center;
+      color: var(--lcd-ink);
+      line-height: 1.3;
+      opacity: 0;
+      transform: translateY(6px);
+      transition: opacity 0.25s steps(4), transform 0.25s steps(4);
+      overflow-wrap: anywhere;
+    }
+
+    .chip:nth-child(1) { background: var(--px-blue-bg); }
+    .chip:nth-child(2) { background: var(--px-gold-bg); }
+    .chip:nth-child(3) { background: var(--px-orange-bg); }
+
+    .scene.active .chip:nth-child(1) { transition-delay: 0.1s; opacity: 1; transform: translateY(0); }
+    .scene.active .chip:nth-child(2) { transition-delay: 0.2s; opacity: 1; transform: translateY(0); }
+    .scene.active .chip:nth-child(3) { transition-delay: 0.3s; opacity: 1; transform: translateY(0); }
+
+    /* 第 2 幕：VS 像素双栏对决 */
+    .vs-wrap {
+      height: 100%;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .vs-grid {
+      flex: 1;
+      min-height: 0;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .vs-box {
+      border: 2.5px solid var(--lcd-ink);
+      box-shadow: 3px 3px 0 var(--lcd-line);
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 6px;
+      overflow: hidden;
+    }
+
+    .vs-box.left { background: var(--px-blue-bg); }
+    .vs-box.right { background: var(--px-orange-bg); }
+
+    .vs-term {
+      margin: 0 0 4px;
+      font-family: var(--mono);
+      font-size: 15px;
+      font-weight: 900;
+      color: var(--lcd-ink);
+      overflow-wrap: anywhere;
+    }
+
+    .vs-box.left .vs-term { color: #1648A6; }
+    .vs-box.right .vs-term { color: #A63B0E; }
+
+    .vs-desc {
+      margin: 0;
+      font-size: 12px;
+      font-weight: 700;
+      line-height: 1.4;
+      color: var(--lcd-ink);
+    }
+
+    .vs-examples {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+
+    .vs-examples li {
+      font-size: 12px;
+      font-weight: 700;
+      line-height: 1.35;
+      padding: 6px 7px;
+      background: #FFFFFF;
+      border: 1.5px solid var(--lcd-ink);
+      overflow-wrap: anywhere;
+    }
+
+    .vs-examples li::before {
+      content: "> ";
+      font-family: var(--mono);
+      font-weight: 900;
+      color: var(--px-orange);
+    }
+
+    /* 第 3 幕：复古代码终端 + 退化 RPG 对话框 */
+    .scene3-wrap {
+      height: 100%;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .px-code-box {
+      background: var(--lcd-tint);
+      border: 2.5px solid var(--lcd-ink);
+      box-shadow: 3px 3px 0 var(--lcd-line);
+      padding: 9px 11px;
+    }
+
+    .px-code-head {
+      display: flex;
+      justify-content: space-between;
+      font-family: var(--mono);
+      font-size: 10.5px;
+      font-weight: 800;
+      color: var(--lcd-muted);
+      border-bottom: 1.5px solid var(--lcd-line);
+      padding-bottom: 4px;
+      margin-bottom: 7px;
+    }
+
+    .code-pre {
+      margin: 0;
+      font-family: var(--mono);
+      font-size: 12.5px;
+      font-weight: 800;
+      line-height: 1.48;
+      color: var(--lcd-ink);
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    .px-out {
+      margin-top: 7px;
+      padding: 5px 8px;
+      background: #FFFFFF;
+      border: 1.5px solid var(--lcd-ink);
+      font-family: var(--mono);
+      font-size: 12px;
+      font-weight: 800;
+      color: var(--px-green);
+      display: flex;
+      gap: 6px;
+      align-items: baseline;
+    }
+
+    .sentence-card {
+      background: #FFFFFF;
+      border: 2.5px solid var(--lcd-ink);
+      box-shadow: 3px 3px 0 var(--lcd-line);
+      padding: 13px;
+    }
+
+    .sentence-bm {
+      margin: 0;
+      font-size: clamp(15px, 3.2vw, 19px);
+      font-weight: 700;
+      line-height: 1.55;
+      color: var(--lcd-ink);
+    }
+
+    .hl {
+      display: inline-block;
+      padding: 0 6px;
+      background: var(--px-gold-bg);
+      border: 1.5px solid var(--lcd-ink);
+      font-weight: 900;
+    }
+
+    .px-trans {
+      margin: 0;
+      background: #FFFFFF;
+      border: 2px solid var(--lcd-ink);
+      padding: 8px 10px;
+      font-size: 12.5px;
+      font-weight: 700;
+      line-height: 1.45;
+    }
+
+    .px-tip {
+      background: var(--px-gold-bg);
+      border: 2px solid var(--lcd-ink);
+      padding: 8px 10px;
+      font-size: 12px;
+      font-weight: 800;
+      line-height: 1.42;
+      color: #6B4100;
+    }
+
+    .hidden { display: none !important; }
+
+    /* 第 4 幕：BOSS 答题翻卡 */
+    .flip-wrap {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      transform-style: preserve-3d;
+      transition: transform 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+      will-change: transform;
+    }
+
+    .flip-wrap.flipped {
+      transform: rotateY(180deg);
+    }
+
+    .flip-face {
+      position: absolute;
+      inset: 0;
+      backface-visibility: hidden;
+      -webkit-backface-visibility: hidden;
+      background: var(--lcd-panel);
+      border: 2.5px solid var(--lcd-ink);
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      overflow: hidden;
+    }
+
+    .flip-back {
+      transform: rotateY(180deg);
+      background: var(--px-green-bg);
+      justify-content: center;
+      text-align: center;
+      gap: 10px;
+    }
+
+    .quiz-q {
+      font-size: 14.5px;
+      font-weight: 800;
+      line-height: 1.45;
+      color: var(--lcd-ink);
+      margin: 4px 0 9px;
+    }
+
+    .opt-list {
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+    }
+
+    .opt-btn {
+      width: 100%;
+      min-height: 41px;
+      padding: 7px 11px;
+      border: 2px solid var(--lcd-ink);
+      background: #FFFFFF;
+      color: var(--lcd-ink);
+      font-family: var(--sans);
+      font-size: 13px;
+      font-weight: 800;
+      text-align: left;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 2px 2px 0 var(--lcd-line);
+    }
+
+    .opt-btn:hover {
+      background: var(--px-gold-bg);
+    }
+
+    .opt-btn.correct {
+      background: var(--px-green-bg);
+      border-color: var(--px-green);
+      color: #135924;
+    }
+
+    .opt-btn.wrong {
+      background: #FFD8DC;
+      border-color: var(--px-red);
+      color: #8A111D;
+    }
+
+    .ans-big {
+      margin: 0;
+      font-family: var(--mono);
+      font-size: clamp(18px, 4.4vw, 24px);
+      font-weight: 900;
+      color: #135924;
+    }
+
+    .ans-explain {
+      margin: 0;
+      padding: 10px 12px;
+      background: #FFFFFF;
+      border: 2px solid var(--lcd-ink);
+      font-size: 12.5px;
+      font-weight: 700;
+      line-height: 1.5;
+      text-align: left;
+    }
+
+    /* 掌机底部实体按键控制区 */
+    .console-controls {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      padding: 8px 4px 0;
+      flex-shrink: 0;
+    }
+
+    .dpad-group {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .ctrl-btn {
+      height: 32px;
+      min-width: 36px;
+      padding: 0 10px;
+      background: #464F5B;
+      color: #FFFFFF;
+      border: 2px solid #22272E;
+      border-radius: 5px;
+      font-family: var(--mono);
+      font-size: 12px;
+      font-weight: 800;
+      cursor: pointer;
+      box-shadow: 0 3px 0 #22272E;
+    }
+
+    .ctrl-btn:active {
+      transform: translateY(2px);
+      box-shadow: 0 1px 0 #22272E;
+    }
+
+    .select-btn {
+      height: 24px;
+      padding: 0 10px;
+      border-radius: 999px;
+      border: 2px solid #756F5D;
+      background: #C7BFA7;
+      color: #2E343D;
+      font-family: var(--mono);
+      font-size: 10.5px;
+      font-weight: 800;
+      cursor: pointer;
+      transform: rotate(-4deg);
+    }
+
+    .ab-group {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .ab-btn {
+      height: 32px;
+      padding: 0 12px;
+      border-radius: 999px;
+      border: 2px solid #6E1437;
+      background: #C62865;
+      color: #FFFFFF;
+      font-family: var(--mono);
+      font-size: 12px;
+      font-weight: 900;
+      cursor: pointer;
+      box-shadow: 0 3px 0 #6E1437;
+    }
+
+    .ab-btn:active {
+      transform: translateY(2px);
+      box-shadow: 0 1px 0 #6E1437;
+    }
+
+    .lcd-mini-btn {
+      height: 28px;
+      padding: 0 10px;
+      background: #FFFFFF;
+      border: 2px solid var(--lcd-ink);
+      color: var(--lcd-ink);
+      font-family: var(--mono);
+      font-size: 11.5px;
+      font-weight: 800;
+      cursor: pointer;
+      box-shadow: 2px 2px 0 var(--lcd-line);
+    }
+
+    /* 像素纸屑 */
+    .confetti-layer {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      overflow: hidden;
+      z-index: 12;
+    }
+
+    .confetti-dot {
+      position: absolute;
+      width: 9px;
+      height: 9px;
+      border: 1.5px solid #19301E;
+      opacity: 0;
+      animation: confettiPop 0.9s steps(12) forwards;
+    }
+
+    @keyframes confettiPop {
+      0% { opacity: 1; transform: translate(0, 0) scale(0.8); }
+      100% { opacity: 0; transform: translate(var(--dx), var(--dy)) scale(1.1); }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .scene, .chip, .flip-wrap {
+        transition: none !important;
+        animation: none !important;
+      }
+      .scene.active .chip {
+        opacity: 1;
+        transform: none;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="stage-shell">
+    <section class="console-body" aria-label="复古像素掌机编程闪卡">
+      <div class="confetti-layer" id="confettiLayer" aria-hidden="true"></div>
+
+      <div class="console-top">
+        <span class="power-led"><i class="led-dot"></i>PWR</span>
+        <div class="progress-row" id="progressRow">
+          <div class="prog-track" data-step="0" title="第 1 关"><div class="prog-fill"></div></div>
+          <div class="prog-track" data-step="1" title="第 2 关"><div class="prog-fill"></div></div>
+          <div class="prog-track" data-step="2" title="第 3 关"><div class="prog-fill"></div></div>
+          <div class="prog-track" data-step="3" title="最终 BOSS"><div class="prog-fill"></div></div>
+        </div>
+        <span class="console-logo">CODE-BOY</span>
+      </div>
+
+      <div class="screen-bezel">
+        <div class="lcd-screen">
+          <header class="lcd-hud">
+            <div class="hud-left">
+              <span class="lang-tag" id="uiLangPill"><span id="uiLang">Python</span></span>
+              <span class="badge" id="uiSubject">Asas Sains Komputer</span>
+              <span class="unit-tag" id="uiUnit">Algoritma</span>
+            </div>
+            <span class="hud-stage" id="uiStageLabel">第 1 / 4 幕</span>
+          </header>
+
+          <div class="viewport" id="viewport">
+            <!-- 第 1 幕：RPG 图鉴开场 -->
+            <article class="scene active" data-scene="0">
+              <div class="quest-bar">[STAGE 1] NEW SKILL UNLOCKED!</div>
+              <div class="rpg-hero">
+                <div class="sprite-row">
+                  <div class="pixel-sprite" id="uiVisual" aria-hidden="true"></div>
+                  <div style="min-width:0;flex:1">
+                    <h1 class="hero-word" id="uiHeroWord">while loop</h1>
+                  </div>
+                </div>
+                <div class="rpg-dialog">
+                  <p class="hero-sub" id="uiHeroMeaning"></p>
+                </div>
+                <div class="chip-list" id="uiChips"></div>
+              </div>
+            </article>
+
+            <!-- 第 2 幕：VS 技能对决 -->
+            <article class="scene" data-scene="1">
+              <div class="vs-wrap">
+                <div class="quest-bar">[STAGE 2] VS BATTLE COMPARE</div>
+                <div class="vs-grid">
+                  <div class="vs-box left">
+                    <div>
+                      <h2 class="vs-term" id="uiLeftTerm"></h2>
+                      <p class="vs-desc" id="uiLeftDesc"></p>
+                    </div>
+                    <ul class="vs-examples" id="uiLeftExamples"></ul>
+                  </div>
+                  <div class="vs-box right">
+                    <div>
+                      <h2 class="vs-term" id="uiRightTerm"></h2>
+                      <p class="vs-desc" id="uiRightDesc"></p>
+                    </div>
+                    <ul class="vs-examples" id="uiRightExamples"></ul>
+                  </div>
+                </div>
+              </div>
+            </article>
+
+            <!-- 第 3 幕：像素代码块 + 退化对话卡 -->
+            <article class="scene" data-scene="2">
+              <div class="scene3-wrap">
+                <div class="quest-bar" id="uiScene3Title">[STAGE 3] RUN CODE QUEST</div>
+                <div class="px-code-box" id="uiCodeBox">
+                  <div class="px-code-head">
+                    <span id="uiCodeLang">ROM: PYTHON</span>
+                    <span>EXEC OK</span>
+                  </div>
+                  <pre class="code-pre" id="uiCodeSnippet"></pre>
+                  <div class="px-out" id="uiOutputRow">
+                    <span>OUT&gt;</span>
+                    <span id="uiCodeOutput"></span>
+                  </div>
+                </div>
+
+                <div class="sentence-card hidden" id="uiSentenceBox">
+                  <p class="sentence-bm" id="uiSentence"></p>
+                </div>
+
+                <p class="px-trans" id="uiTranslation"></p>
+                <div class="px-tip" id="uiTip"></div>
+              </div>
+            </article>
+
+            <!-- 第 4 幕：BOSS 答题翻卡 -->
+            <article class="scene" data-scene="3">
+              <div class="flip-wrap" id="flipWrap">
+                <div class="flip-face">
+                  <div>
+                    <div class="quest-bar">[FINAL BOSS] QUIZ CHALLENGE</div>
+                    <div class="quiz-q" id="uiQuizQ"></div>
+                    <div class="opt-list" id="uiQuizOpts"></div>
+                  </div>
+                  <div style="display:flex;justify-content:space-between;align-items:center">
+                    <span style="font-size:11px;font-weight:700;color:var(--lcd-muted)" id="uiQuizHint">选择答案，或 4 秒后揭晓</span>
+                    <button class="lcd-mini-btn" id="flipNowBtn" type="button">看答案</button>
+                  </div>
+                </div>
+                <div class="flip-face flip-back">
+                  <div class="quest-bar" style="color:#135924;margin-bottom:0">STAGE CLEAR! +100 EXP</div>
+                  <p class="ans-big" id="uiAnsText"></p>
+                  <p class="ans-explain" id="uiAnsExplain"></p>
+                  <div>
+                    <button class="lcd-mini-btn" id="replayBtn" type="button">REPLAY 重玩</button>
+                  </div>
+                </div>
+              </div>
+            </article>
+          </div>
+        </div>
+      </div>
+
+      <footer class="console-controls">
+        <div class="dpad-group">
+          <button class="ctrl-btn" id="prevBtn" type="button" title="上一幕">&lt; PREV</button>
+          <button class="ctrl-btn" id="nextBtn" type="button" title="下一幕">NEXT &gt;</button>
+        </div>
+        <div id="sampleSwitchWrap">
+          <button class="select-btn" id="sampleSwitchBtn" type="button">SELECT 1/3</button>
+        </div>
+        <div class="ab-group">
+          <button class="ab-btn" id="playBtn" type="button">暂停</button>
+        </div>
+      </footer>
+    </section>
+  </main>
+
+  <script>
+    const SAMPLES = [
+      {
+        id: "sample_py_while",
+        type: "code",
+        lang: "Python",
+        subject: "Asas Sains Komputer",
+        unit: "Gelung While",
+        word: "while cond:",
+        meaning: "条件循环 (Condition Loop)：只要条件为真 (True) 就不断重复，必须更新变量防死循环。",
+        chips: ["先判断后执行", "未知次数首选", "防 Infinite Loop"],
+        iconSvg: `<svg viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="12"></rect><rect x="7" y="8" width="10" height="6"></rect><path d="M8 20h8M12 17v3"></path></svg>`,
+        compare: {
+          left: {
+            term: "while 循环",
+            desc: "不知道要循环多少次，看条件停止",
+            items: ["while hp > 0:", "适合游戏主循环", "需手动更新条件"]
+          },
+          right: {
+            term: "for 循环",
+            desc: "事先知道固定次数或遍历序列",
+            items: ["for i in range(5):", "自动递增计数器", "不易出现死循环"]
+          }
+        },
+        codeSnippet: "hp = 3\nwhile hp > 0:\n    hp -= 1\nprint('Game Over, hp =', hp)",
+        codeOutput: "Game Over, hp = 0",
+        sentenceBefore: "当不知道循环次数时使用 ",
+        sentenceHighlight: "while",
+        sentenceAfter: " 循环。",
+        translation: "初始 hp 为 3，每轮减 1，减到 0 时 hp > 0 变假 (False)，循环结束打印 Game Over。",
+        tip: "避坑血条：写 while 时第一时间写上 hp -= 1 或 break，否则游戏会卡死在无限循环！",
+        quiz: {
+          question: "以下哪段代码会导致「死循环 (Infinite Loop)」？",
+          options: ["A. x=3; while x>0: x-=1", "B. x=1; while x<5: x+=1", "C. x=3; while x>0: print(x)"],
+          answerIndex: 2,
+          answerText: "C. x=3; while x>0: print(x)",
+          explain: "选项 C 的 x 始终是 3，没有任何语句改变 x 的值，x > 0 永远为 True。"
+        }
+      },
+      {
+        id: "sample_algo_bsearch",
+        type: "code",
+        lang: "Algorithm",
+        subject: "Sains Komputer",
+        unit: "Carian Binari",
+        word: "Binary Search",
+        meaning: "二分查找：要求数组已排序，每次取中间元素比大小，直接砍掉一半搜索区间。",
+        chips: ["必须先有序 Sorted", "时间复杂度 O(log n)", "100万仅需20步"],
+        iconSvg: `<svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6"></circle><path d="M16 16l4 4M9 11h4"></path></svg>`,
+        compare: {
+          left: {
+            term: "Binary Search",
+            desc: "折半跳跃查找，速度极快",
+            items: ["复杂度 O(log n)", "前提：数组必须有序", "每次淘汰一半"]
+          },
+          right: {
+            term: "Linear Search",
+            desc: "从头到尾逐个比对元素",
+            items: ["复杂度 O(n)", "无序数组也能用", "数据量大时较慢"]
+          }
+        },
+        codeSnippet: "arr = [2, 5, 8, 12, 16]\nmid = (0 + 4) // 2\nprint('mid val:', arr[mid])",
+        codeOutput: "mid val: 8",
+        sentenceBefore: "在有序列表中查找目标优先使用 ",
+        sentenceHighlight: "Binary Search",
+        sentenceAfter: "。",
+        translation: "先算出中间下标 mid = 2，检查 arr[2] = 8；若目标大于 8，下一步只查右半边 [12, 16]。",
+        tip: "防溢出写诀：求中点可用 left + (right - left) // 2，在 C++/Java 中可防止整数相加溢出！",
+        quiz: {
+          question: "在 1024 个有序数字中使用二分查找，最多大约需要比较几次？",
+          options: ["A. 10 次左右", "B. 512 次", "C. 1024 次"],
+          answerIndex: 0,
+          answerText: "A. 10 次左右 (2^10 = 1024)",
+          explain: "每次比较范围缩小一半，log2(1024) = 10，所以最多 10~11 次即可锁定目标。"
+        }
+      },
+      {
+        id: "sample_array_index",
+        type: "code",
+        lang: "Python / C++",
+        subject: "Asas Sains Komputer",
+        unit: "Tatasusunan (Array)",
+        word: "Index [0 .. n-1]",
+        meaning: "零基索引 (0-based Indexing)：数组第一个元素的下标是 0，最后一个是长度减 1。",
+        chips: ["首元素下标为 0", "末元素为 len - 1", "防 IndexError 越界"],
+        iconSvg: `<svg viewBox="0 0 24 24"><path d="M4 6h16v12H4zM9 6v12M15 6v12"></path></svg>`,
+        compare: {
+          left: {
+            term: "arr[0]",
+            desc: "偏移量为 0，指向第 1 个格子",
+            items: ["索引起点 = 0", "表示起始内存地址", "C / Python / JS 通用"]
+          },
+          right: {
+            term: "arr[len(arr)]",
+            desc: "越界访问！有效最大下标是 len - 1",
+            items: ["会触发 IndexError", "长度为 4 时下标 0~3", "循环注意 < len"]
+          }
+        },
+        codeSnippet: "items = ['Sword', 'Shield', 'Potion']\nprint(items[0], items[len(items)-1])",
+        codeOutput: "Sword Potion",
+        sentenceBefore: "访问数组第一个元素要写 ",
+        sentenceHighlight: "items[0]",
+        sentenceAfter: " 而不是 items[1]。",
+        translation: "items 长度为 3，合法下标只有 0、1、2；items[0] 是 Sword，items[2] 是 Potion。",
+        tip: "记忆口诀：下标就是「偏移几步」——站在门口不用迈步就是 0，最后一件装备只需走 n - 1 步！",
+        quiz: {
+          question: "对于 arr = [10, 20, 30, 40]，访问 arr[4] 会发生什么？",
+          options: ["A. 返回 40", "B. 越界报错 IndexError", "C. 返回 10"],
+          answerIndex: 1,
+          answerText: "B. 越界报错 IndexError",
+          explain: "arr 共有 4 个元素，有效下标是 0, 1, 2, 3，不存在下标 4。"
+        }
+      }
+    ];
+
+    const DEFAULT_CARD = SAMPLES[0];
+
+    function decodeBase64UrlUtf8(raw) {
+      const b64 = raw.replace(/-/g, "+").replace(/_/g, "/");
+      const padded = b64.padEnd(Math.ceil(b64.length / 4) * 4, "=");
+      const bin = atob(padded);
+      const bytes = Uint8Array.from(bin, (c) => c.charCodeAt(0));
+      return new TextDecoder("utf-8").decode(bytes);
+    }
+
+    function loadCardData() {
+      try {
+        const params = new URLSearchParams(location.search);
+        const raw = params.get("d");
+        if (!raw) return { card: DEFAULT_CARD, fromUrl: false };
+        const parsed = JSON.parse(decodeBase64UrlUtf8(raw));
+        return {
+          fromUrl: true,
+          card: {
+            ...DEFAULT_CARD,
+            ...parsed,
+            lang: parsed.lang || "",
+            codeSnippet: parsed.codeSnippet !== undefined ? parsed.codeSnippet : "",
+            codeOutput: parsed.codeOutput !== undefined ? parsed.codeOutput : "",
+            sentenceBefore: parsed.sentenceBefore !== undefined ? parsed.sentenceBefore : "",
+            sentenceHighlight: parsed.sentenceHighlight !== undefined ? parsed.sentenceHighlight : "",
+            sentenceAfter: parsed.sentenceAfter !== undefined ? parsed.sentenceAfter : "",
+            iconSvg: parsed.iconSvg || DEFAULT_CARD.iconSvg,
+            chips: Array.isArray(parsed.chips) ? parsed.chips : DEFAULT_CARD.chips,
+            compare: {
+              left: { ...DEFAULT_CARD.compare.left, ...((parsed.compare && parsed.compare.left) || {}) },
+              right: { ...DEFAULT_CARD.compare.right, ...((parsed.compare && parsed.compare.right) || {}) }
+            },
+            quiz: { ...DEFAULT_CARD.quiz, ...(parsed.quiz || {}) }
+          }
+        };
+      } catch (e) {
+        return { card: DEFAULT_CARD, fromUrl: false };
+      }
+    }
+
+    let sampleIdx = 0;
+    const loaded = loadCardData();
+    let card = loaded.card;
+
+    if (loaded.fromUrl) {
+      document.getElementById("sampleSwitchWrap").classList.add("hidden");
+    }
+
+    function playChime() {
+      try {
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        [523.25, 659.25, 783.99, 1046.5].forEach((freq, i) => {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = "square";
+          osc.frequency.value = freq;
+          gain.gain.setValueAtTime(0.035, ctx.currentTime + i * 0.055);
+          gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + i * 0.055 + 0.14);
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start(ctx.currentTime + i * 0.055);
+          osc.stop(ctx.currentTime + i * 0.055 + 0.15);
+        });
+      } catch (_) {}
+    }
+
+    function burstConfetti() {
+      const layer = document.getElementById("confettiLayer");
+      const colors = ["#2D6CDF", "#DF5A20", "#FFD43B", "#22B14C", "#C62865"];
+      for (let i = 0; i < 20; i++) {
+        const dot = document.createElement("span");
+        dot.className = "confetti-dot";
+        dot.style.left = "50%";
+        dot.style.top = "52%";
+        dot.style.background = colors[i % colors.length];
+        const ang = (Math.PI * 2 * i) / 20 + (Math.random() - 0.5) * 0.3;
+        const dist = 70 + Math.random() * 140;
+        dot.style.setProperty("--dx", `${Math.cos(ang) * dist}px`);
+        dot.style.setProperty("--dy", `${Math.sin(ang) * dist}px`);
+        layer.appendChild(dot);
+        setTimeout(() => dot.remove(), 950);
+      }
+    }
+
+    function renderCard(c) {
+      const langText = (c.lang || "").trim();
+      const langPill = document.getElementById("uiLangPill");
+      if (langText) {
+        langPill.classList.remove("hidden");
+        document.getElementById("uiLang").textContent = langText;
+      } else {
+        langPill.classList.add("hidden");
+      }
+
+      document.getElementById("uiSubject").textContent = c.subject || "";
+      document.getElementById("uiUnit").textContent = c.unit || "";
+      document.getElementById("uiHeroWord").textContent = c.word || "";
+      document.getElementById("uiHeroMeaning").textContent = c.meaning || "";
+      document.getElementById("uiVisual").innerHTML = c.iconSvg || DEFAULT_CARD.iconSvg;
+
+      const chipsEl = document.getElementById("uiChips");
+      chipsEl.innerHTML = "";
+      (c.chips || []).slice(0, 3).forEach((txt) => {
+        const span = document.createElement("span");
+        span.className = "chip";
+        span.textContent = txt;
+        chipsEl.appendChild(span);
+      });
+
+      document.getElementById("uiLeftTerm").textContent = c.compare.left.term || "";
+      document.getElementById("uiLeftDesc").textContent = c.compare.left.desc || "";
+      const leftUl = document.getElementById("uiLeftExamples");
+      leftUl.innerHTML = "";
+      (c.compare.left.items || []).forEach((it) => {
+        const li = document.createElement("li");
+        li.textContent = it;
+        leftUl.appendChild(li);
+      });
+
+      document.getElementById("uiRightTerm").textContent = c.compare.right.term || "";
+      document.getElementById("uiRightDesc").textContent = c.compare.right.desc || "";
+      const rightUl = document.getElementById("uiRightExamples");
+      rightUl.innerHTML = "";
+      (c.compare.right.items || []).forEach((it) => {
+        const li = document.createElement("li");
+        li.textContent = it;
+        rightUl.appendChild(li);
+      });
+
+      const hasCode = typeof c.codeSnippet === "string" && c.codeSnippet.trim().length > 0;
+      const codeBox = document.getElementById("uiCodeBox");
+      const sentBox = document.getElementById("uiSentenceBox");
+      const scene3Title = document.getElementById("uiScene3Title");
+
+      if (hasCode) {
+        scene3Title.textContent = "[STAGE 3] RUN CODE QUEST";
+        codeBox.classList.remove("hidden");
+        sentBox.classList.add("hidden");
+        document.getElementById("uiCodeLang").textContent = "ROM: " + (langText || "CODE").toUpperCase();
+        document.getElementById("uiCodeSnippet").textContent = c.codeSnippet;
+        const outRow = document.getElementById("uiOutputRow");
+        const hasOut = typeof c.codeOutput === "string" && c.codeOutput.trim().length > 0;
+        outRow.classList.toggle("hidden", !hasOut);
+        document.getElementById("uiCodeOutput").textContent = c.codeOutput || "";
+      } else {
+        scene3Title.textContent = "[STAGE 3] DIALOG QUEST";
+        codeBox.classList.add("hidden");
+        sentBox.classList.remove("hidden");
+        const sentEl = document.getElementById("uiSentence");
+        sentEl.innerHTML = "";
+        sentEl.appendChild(document.createTextNode(c.sentenceBefore || ""));
+        if (c.sentenceHighlight) {
+          const hl = document.createElement("span");
+          hl.className = "hl";
+          hl.textContent = c.sentenceHighlight;
+          sentEl.appendChild(hl);
+        }
+        sentEl.appendChild(document.createTextNode(c.sentenceAfter || ""));
+      }
+
+      const transEl = document.getElementById("uiTranslation");
+      transEl.textContent = c.translation || "";
+      transEl.classList.toggle("hidden", !c.translation);
+
+      const tipEl = document.getElementById("uiTip");
+      tipEl.textContent = c.tip || "";
+      tipEl.classList.toggle("hidden", !c.tip);
+
+      document.getElementById("uiQuizQ").textContent = c.quiz.question || "";
+      document.getElementById("uiAnsText").textContent = c.quiz.answerText || "";
+      document.getElementById("uiAnsExplain").textContent = c.quiz.explain || "";
+
+      const optsEl = document.getElementById("uiQuizOpts");
+      optsEl.innerHTML = "";
+      (c.quiz.options || []).forEach((opt, idx) => {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "opt-btn";
+        btn.innerHTML = `<span></span><span></span>`;
+        btn.firstElementChild.textContent = opt;
+        btn.addEventListener("click", () => handleAnswer(idx, btn));
+        optsEl.appendChild(btn);
+      });
+    }
+
+    const DURATIONS = [4200, 4600, 5000, 7200];
+    const scenes = Array.from(document.querySelectorAll(".scene"));
+    const tracks = Array.from(document.querySelectorAll(".prog-track"));
+    const fills = tracks.map((t) => t.querySelector(".prog-fill"));
+    const flipWrap = document.getElementById("flipWrap");
+    const playBtn = document.getElementById("playBtn");
+    const stageLabel = document.getElementById("uiStageLabel");
+
+    let current = 0;
+    let elapsed = 0;
+    let playing = !window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    let flipped = false;
+    let flipTimer = null;
+    let lastTick = performance.now();
+
+    function updatePlayLabel() {
+      playBtn.textContent = playing ? "暂停" : "播放";
+    }
+
+    function setScene(nextIdx) {
+      if (flipTimer) {
+        clearTimeout(flipTimer);
+        flipTimer = null;
+      }
+      const prevIdx = current;
+      current = (nextIdx + scenes.length) % scenes.length;
+      elapsed = 0;
+      flipped = false;
+      flipWrap.classList.remove("flipped");
+
+      scenes.forEach((s, i) => {
+        s.classList.remove("active", "leaving");
+        if (i === current) s.classList.add("active");
+        else if (i === prevIdx && prevIdx !== current) s.classList.add("leaving");
+      });
+
+      tracks.forEach((t, i) => {
+        t.classList.toggle("done", i < current);
+        fills[i].style.transform = i < current ? "scaleX(1)" : "scaleX(0)";
+      });
+
+      stageLabel.textContent = `第 ${current + 1} / ${scenes.length} 幕`;
+      document.querySelectorAll(".opt-btn").forEach((b) => {
+        b.classList.remove("correct", "wrong");
+        b.lastElementChild.textContent = "";
+      });
+    }
+
+    function handleAnswer(idx, btn) {
+      const ok = idx === card.quiz.answerIndex;
+      btn.classList.add(ok ? "correct" : "wrong");
+      btn.lastElementChild.textContent = ok ? "WIN!" : "MISS";
+      if (ok) {
+        playChime();
+        burstConfetti();
+        if (flipTimer) clearTimeout(flipTimer);
+        flipTimer = setTimeout(() => {
+          flipped = true;
+          flipWrap.classList.add("flipped");
+        }, 550);
+      }
+    }
+
+    function tick(now) {
+      const dt = now - lastTick;
+      lastTick = now;
+
+      if (playing) {
+        elapsed += dt;
+        const dur = DURATIONS[current];
+        const ratio = Math.min(1, elapsed / dur);
+        fills[current].style.transform = `scaleX(${ratio})`;
+
+        if (current === 3 && !flipped && elapsed >= 4000) {
+          flipped = true;
+          flipWrap.classList.add("flipped");
+        }
+        if (elapsed >= dur) {
+          setScene(current + 1);
+        }
+      }
+      requestAnimationFrame(tick);
+    }
+
+    playBtn.addEventListener("click", () => {
+      playing = !playing;
+      updatePlayLabel();
+    });
+    document.getElementById("prevBtn").addEventListener("click", () => setScene(current - 1));
+    document.getElementById("nextBtn").addEventListener("click", () => setScene(current + 1));
+    document.getElementById("flipNowBtn").addEventListener("click", () => {
+      flipped = !flipped;
+      flipWrap.classList.toggle("flipped", flipped);
+    });
+    document.getElementById("replayBtn").addEventListener("click", () => setScene(0));
+    tracks.forEach((t) => {
+      t.addEventListener("click", () => setScene(Number(t.dataset.step)));
+    });
+
+    const sampleBtn = document.getElementById("sampleSwitchBtn");
+    sampleBtn.addEventListener("click", () => {
+      sampleIdx = (sampleIdx + 1) % SAMPLES.length;
+      card = SAMPLES[sampleIdx];
+      sampleBtn.textContent = `SELECT ${sampleIdx + 1}/${SAMPLES.length}`;
+      renderCard(card);
+      setScene(0);
+    });
+
+    renderCard(card);
+    updatePlayLabel();
+    setScene(0);
+    requestAnimationFrame(tick);
+  </script>
+</body>
+</html>

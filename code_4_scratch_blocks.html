@@ -1,0 +1,1390 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="icon" href="data:,">
+  <title>DELIMa Code Card · Scratch 彩色教育积木风</title>
+  <style>
+    :root {
+      --desk-bg: #EAF3FF;
+      --board: #FFFFFF;
+      --board-soft: #F7FAFF;
+      --ink: #243044;
+      --muted: #607089;
+      --line: #D4E2F4;
+
+      /* Scratch 经典积木色系 */
+      --motion: #4C97FF;
+      --motion-dark: #3373CC;
+      --motion-soft: #E8F2FF;
+
+      --looks: #9966FF;
+      --looks-dark: #774DCB;
+      --looks-soft: #F3ECFF;
+
+      --events: #FFBF00;
+      --events-dark: #CC9900;
+      --events-soft: #FFF7D6;
+
+      --control: #FFAB19;
+      --control-dark: #CF8B17;
+      --control-soft: #FFF3DD;
+
+      --sensing: #5CB1D6;
+      --sensing-dark: #2E8EB8;
+      --sensing-soft: #E5F6FD;
+
+      --green: #59C059;
+      --green-dark: #389438;
+      --green-soft: #E8F8E8;
+
+      --red: #FF6680;
+      --red-dark: #CC3E56;
+
+      --sans: "Segoe UI", "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    }
+
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background-color: var(--desk-bg);
+      background-image:
+        radial-gradient(#C7DCF7 1.3px, transparent 1.3px);
+      background-size: 18px 18px;
+      font-family: var(--sans);
+      color: var(--ink);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* 1:1 正方形舞台 */
+    .stage-shell {
+      position: relative;
+      width: min(100vw, 100vh, 620px);
+      height: min(100vw, 100vh, 620px);
+      aspect-ratio: 1 / 1;
+      padding: 12px;
+      overflow: hidden;
+      display: flex;
+    }
+
+    /* 积木工作台主面板 */
+    .scratch-board {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      background: var(--board);
+      border: 2.5px solid #C5D9F2;
+      border-radius: 22px;
+      box-shadow:
+        0 8px 0 #C5D9F2,
+        0 14px 28px rgba(45, 86, 145, 0.12);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      padding: 12px 14px 10px;
+    }
+
+    /* 顶部彩色积木进度条 */
+    .progress-row {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 7px;
+      margin-bottom: 10px;
+      flex-shrink: 0;
+    }
+
+    .prog-track {
+      height: 8px;
+      background: #E8EFF8;
+      border-radius: 999px;
+      overflow: hidden;
+      cursor: pointer;
+      border: 1px solid #D5E3F5;
+    }
+
+    .prog-fill {
+      width: 100%;
+      height: 100%;
+      border-radius: 999px;
+      transform-origin: left center;
+      transform: scaleX(0);
+      will-change: transform;
+    }
+
+    .prog-track:nth-child(1) .prog-fill { background: var(--events); }
+    .prog-track:nth-child(2) .prog-fill { background: var(--motion); }
+    .prog-track:nth-child(3) .prog-fill { background: var(--looks); }
+    .prog-track:nth-child(4) .prog-fill { background: var(--green); }
+
+    .prog-track.done .prog-fill {
+      transform: scaleX(1);
+    }
+
+    /* 顶栏：绿旗 + 积木徽标 + 控制按键 */
+    .header-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 10px;
+      flex-shrink: 0;
+    }
+
+    .badge-group {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      min-width: 0;
+    }
+
+    .lang-block {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 4px 10px;
+      border-radius: 999px;
+      background: var(--events);
+      border: 2px solid var(--events-dark);
+      color: #4A3200;
+      font-size: 12px;
+      font-weight: 800;
+      box-shadow: 0 2px 0 var(--events-dark);
+      flex-shrink: 0;
+    }
+
+    .badge {
+      padding: 4px 10px;
+      border-radius: 9px;
+      background: var(--motion-soft);
+      border: 1.5px solid #A8CCFF;
+      color: #1F57A8;
+      font-size: 11.5px;
+      font-weight: 800;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 160px;
+    }
+
+    .unit-tag {
+      padding: 4px 9px;
+      border-radius: 9px;
+      background: var(--looks-soft);
+      border: 1.5px solid #D4BFFF;
+      color: #5C32B2;
+      font-size: 11.5px;
+      font-weight: 700;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 145px;
+    }
+
+    .controls {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      flex-shrink: 0;
+    }
+
+    .ctrl-btn {
+      height: 30px;
+      min-width: 30px;
+      padding: 0 10px;
+      border-radius: 9px;
+      border: 2px solid #C4D6EE;
+      background: #FFFFFF;
+      color: var(--ink);
+      font-family: var(--sans);
+      font-size: 12px;
+      font-weight: 800;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      box-shadow: 0 2px 0 #C4D6EE;
+      transition: transform 0.12s ease;
+    }
+
+    .ctrl-btn:active {
+      transform: translateY(2px);
+      box-shadow: none;
+    }
+
+    .ctrl-btn.flag-btn {
+      background: var(--green-soft);
+      border-color: var(--green);
+      color: #216E21;
+      box-shadow: 0 2px 0 var(--green);
+    }
+
+    /* 主舞台 */
+    .viewport {
+      position: relative;
+      flex: 1;
+      min-height: 0;
+      perspective: 1100px;
+      overflow: hidden;
+    }
+
+    .scene {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      opacity: 0;
+      transform: scale(0.95) translateX(22px);
+      pointer-events: none;
+      transition: opacity 0.38s ease, transform 0.42s cubic-bezier(0.34, 1.4, 0.64, 1);
+      overflow: hidden;
+    }
+
+    .scene.active {
+      opacity: 1;
+      transform: scale(1) translateX(0);
+      pointer-events: auto;
+    }
+
+    .scene.leaving {
+      opacity: 0;
+      transform: scale(0.95) translateX(-22px);
+    }
+
+    .eyebrow {
+      font-size: 11.5px;
+      font-weight: 800;
+      color: var(--muted);
+      letter-spacing: 0.4px;
+      margin-bottom: 8px;
+      flex-shrink: 0;
+    }
+
+    /* 第 1 幕：Scratch 积木拼装结构 */
+    .stack-stage {
+      height: 100%;
+      background: var(--board-soft);
+      border: 2px dashed #C7DAF2;
+      border-radius: 18px;
+      padding: 14px 16px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+    }
+
+    .block-assembly {
+      width: 100%;
+      max-width: 490px;
+      display: flex;
+      flex-direction: column;
+      align-items: stretch;
+    }
+
+    /* 顶部圆拱 Hat 积木 */
+    .hat-block {
+      position: relative;
+      align-self: flex-start;
+      background: var(--events);
+      border: 2px solid var(--events-dark);
+      border-bottom: none;
+      border-radius: 22px 22px 0 0;
+      padding: 7px 18px 6px;
+      color: #4A3200;
+      font-size: 12px;
+      font-weight: 800;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      margin-left: 8px;
+    }
+
+    /* 主积木块：带凹凸拼接口 */
+    .main-block {
+      position: relative;
+      background: var(--motion);
+      border: 2px solid var(--motion-dark);
+      border-radius: 14px;
+      padding: 16px 18px;
+      color: #FFFFFF;
+      box-shadow: 0 5px 0 var(--motion-dark);
+      text-align: center;
+      transform: translateY(10px) scale(0.96);
+      opacity: 0;
+      transition: transform 0.48s cubic-bezier(0.34, 1.56, 0.64, 1) 0.08s, opacity 0.4s ease 0.08s;
+    }
+
+    .scene.active .main-block {
+      transform: translateY(0) scale(1);
+      opacity: 1;
+    }
+
+    /* 积木顶部凹槽与底部凸起齿 */
+    .main-block::before {
+      content: "";
+      position: absolute;
+      top: -2px;
+      left: 26px;
+      width: 34px;
+      height: 7px;
+      background: var(--board-soft);
+      border: 2px solid var(--motion-dark);
+      border-top: none;
+      border-radius: 0 0 6px 6px;
+    }
+
+    .main-block::after {
+      content: "";
+      position: absolute;
+      bottom: -8px;
+      left: 26px;
+      width: 34px;
+      height: 7px;
+      background: var(--motion);
+      border: 2px solid var(--motion-dark);
+      border-top: none;
+      border-radius: 0 0 6px 6px;
+      z-index: 2;
+    }
+
+    .hero-word {
+      margin: 0;
+      font-family: var(--mono);
+      font-size: clamp(22px, 5.2vw, 34px);
+      font-weight: 800;
+      line-height: 1.2;
+      color: #FFFFFF;
+      text-shadow: 0 2px 0 rgba(20, 62, 128, 0.35);
+      overflow-wrap: anywhere;
+    }
+
+    /* 下方咬合释义积木 */
+    .meaning-block {
+      position: relative;
+      margin-top: 2px;
+      background: #FFFFFF;
+      border: 2px solid #9DC4FF;
+      border-radius: 14px;
+      padding: 14px 16px;
+      box-shadow: 0 4px 0 #C7DDFC;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .block-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      background: var(--control-soft);
+      border: 2px solid var(--control);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .block-icon svg {
+      width: 26px;
+      height: 26px;
+      stroke: var(--control-dark);
+      fill: none;
+      stroke-width: 2.3;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .hero-sub {
+      margin: 0;
+      font-size: 14px;
+      font-weight: 700;
+      line-height: 1.5;
+      color: var(--ink);
+    }
+
+    /* Reporter 椭圆参数积木组 */
+    .chip-list {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 9px;
+      margin-top: 4px;
+    }
+
+    .chip {
+      padding: 7px 14px;
+      border-radius: 999px;
+      font-size: 12.5px;
+      font-weight: 800;
+      color: #FFFFFF;
+      opacity: 0;
+      transform: translateY(12px) scale(0.9);
+      transition: opacity 0.38s ease, transform 0.42s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    .chip:nth-child(1) {
+      background: var(--control);
+      border: 2px solid var(--control-dark);
+      box-shadow: 0 3px 0 var(--control-dark);
+    }
+    .chip:nth-child(2) {
+      background: var(--looks);
+      border: 2px solid var(--looks-dark);
+      box-shadow: 0 3px 0 var(--looks-dark);
+    }
+    .chip:nth-child(3) {
+      background: var(--sensing);
+      border: 2px solid var(--sensing-dark);
+      box-shadow: 0 3px 0 var(--sensing-dark);
+    }
+
+    .scene.active .chip:nth-child(1) { transition-delay: 0.18s; opacity: 1; transform: translateY(0) scale(1); }
+    .scene.active .chip:nth-child(2) { transition-delay: 0.28s; opacity: 1; transform: translateY(0) scale(1); }
+    .scene.active .chip:nth-child(3) { transition-delay: 0.38s; opacity: 1; transform: translateY(0) scale(1); }
+
+    /* 第 2 幕：双轨积木对比台 */
+    .vs-wrap {
+      height: 100%;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .vs-grid {
+      flex: 1;
+      min-height: 0;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .vs-box {
+      border-radius: 18px;
+      padding: 13px 12px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 8px;
+      opacity: 0;
+      transform: translateY(14px);
+      transition: opacity 0.4s ease, transform 0.45s cubic-bezier(0.34, 1.4, 0.64, 1);
+      overflow: hidden;
+    }
+
+    .vs-box.left {
+      background: var(--motion-soft);
+      border: 2px solid var(--motion);
+      box-shadow: 0 4px 0 #9AC3FF;
+    }
+
+    .vs-box.right {
+      background: var(--looks-soft);
+      border: 2px solid var(--looks);
+      box-shadow: 0 4px 0 #CBB0FF;
+    }
+
+    .scene.active .vs-box.left { transition-delay: 0.08s; opacity: 1; transform: translateY(0); }
+    .scene.active .vs-box.right { transition-delay: 0.20s; opacity: 1; transform: translateY(0); }
+
+    .vs-head-pill {
+      display: inline-block;
+      align-self: flex-start;
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-family: var(--mono);
+      font-size: 14px;
+      font-weight: 800;
+      color: #FFFFFF;
+      overflow-wrap: anywhere;
+    }
+
+    .vs-box.left .vs-head-pill { background: var(--motion); box-shadow: 0 2px 0 var(--motion-dark); }
+    .vs-box.right .vs-head-pill { background: var(--looks); box-shadow: 0 2px 0 var(--looks-dark); }
+
+    .vs-desc {
+      margin: 4px 0 0;
+      font-size: 12.5px;
+      line-height: 1.42;
+      font-weight: 700;
+      color: var(--ink);
+    }
+
+    .vs-examples {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .vs-examples li {
+      font-size: 12.5px;
+      font-weight: 700;
+      padding: 7px 10px;
+      border-radius: 10px;
+      background: #FFFFFF;
+      border: 1.5px solid rgba(36, 48, 68, 0.1);
+      color: var(--ink);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      overflow-wrap: anywhere;
+    }
+
+    .vs-examples li::before {
+      content: "";
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .vs-box.left .vs-examples li::before { background: var(--motion); }
+    .vs-box.right .vs-examples li::before { background: var(--looks); }
+
+    /* 第 3 幕：积木脚本框 + 角色输出气泡 */
+    .scene3-wrap {
+      height: 100%;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 10px;
+    }
+
+    .script-card {
+      background: #27364B;
+      border: 2.5px solid #1C2736;
+      border-radius: 16px;
+      padding: 12px 14px;
+      box-shadow: 0 4px 0 #1C2736;
+      color: #F4F8FF;
+    }
+
+    .script-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 8px;
+      font-size: 11px;
+      font-weight: 800;
+      color: #9BB6DA;
+    }
+
+    .code-pre {
+      margin: 0;
+      font-family: var(--mono);
+      font-size: 13px;
+      line-height: 1.5;
+      font-weight: 700;
+      white-space: pre-wrap;
+      word-break: break-word;
+      color: #FFFFFF;
+    }
+
+    .speech-bubble {
+      position: relative;
+      margin-top: 10px;
+      background: #FFFFFF;
+      color: var(--ink);
+      border: 2px solid var(--sensing);
+      border-radius: 12px;
+      padding: 7px 11px;
+      font-family: var(--mono);
+      font-size: 12.5px;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .say-badge {
+      background: var(--sensing);
+      color: #FFFFFF;
+      font-size: 10.5px;
+      padding: 2px 7px;
+      border-radius: 999px;
+      flex-shrink: 0;
+    }
+
+    .sentence-card {
+      background: var(--sensing-soft);
+      border: 2px solid var(--sensing);
+      border-radius: 16px;
+      padding: 16px;
+      box-shadow: 0 4px 0 #A5DAEF;
+    }
+
+    .sentence-bm {
+      margin: 0;
+      font-size: clamp(16px, 3.3vw, 20px);
+      font-weight: 700;
+      line-height: 1.58;
+      color: var(--ink);
+    }
+
+    .hl {
+      display: inline-block;
+      padding: 1px 8px;
+      border-radius: 999px;
+      background: var(--events);
+      border: 1.5px solid var(--events-dark);
+      color: #4A3200;
+      font-weight: 800;
+    }
+
+    .trans-note {
+      margin: 0;
+      background: var(--board-soft);
+      border: 1.5px solid var(--line);
+      border-radius: 12px;
+      padding: 9px 12px;
+      font-size: 13px;
+      font-weight: 700;
+      line-height: 1.48;
+      color: var(--ink);
+    }
+
+    .tip-pill {
+      background: var(--green-soft);
+      border: 2px solid var(--green);
+      border-radius: 12px;
+      padding: 9px 12px;
+      font-size: 12.5px;
+      font-weight: 800;
+      line-height: 1.45;
+      color: #1E631E;
+    }
+
+    .hidden { display: none !important; }
+
+    /* 第 4 幕：趣味闯关翻卡 */
+    .flip-wrap {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      transform-style: preserve-3d;
+      transition: transform 0.68s cubic-bezier(0.34, 1.3, 0.64, 1);
+      will-change: transform;
+    }
+
+    .flip-wrap.flipped {
+      transform: rotateY(180deg);
+    }
+
+    .flip-face {
+      position: absolute;
+      inset: 0;
+      backface-visibility: hidden;
+      -webkit-backface-visibility: hidden;
+      background: var(--looks-soft);
+      border: 2px solid var(--looks);
+      border-radius: 18px;
+      padding: 15px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      box-shadow: 0 5px 0 #CBB0FF;
+      overflow: hidden;
+    }
+
+    .flip-back {
+      transform: rotateY(180deg);
+      background: var(--green-soft);
+      border-color: var(--green);
+      box-shadow: 0 5px 0 #A5DFA5;
+      justify-content: center;
+      text-align: center;
+      gap: 12px;
+    }
+
+    .quiz-q {
+      font-size: 15.5px;
+      font-weight: 800;
+      line-height: 1.45;
+      color: var(--ink);
+      margin: 4px 0 11px;
+    }
+
+    .opt-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .opt-btn {
+      width: 100%;
+      min-height: 44px;
+      padding: 9px 13px;
+      border-radius: 12px;
+      border: 2px solid #D1BEFF;
+      border-left: 7px solid var(--looks);
+      background: #FFFFFF;
+      color: var(--ink);
+      font-family: var(--sans);
+      font-size: 13.5px;
+      font-weight: 800;
+      text-align: left;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0 3px 0 #DECFFF;
+      transition: transform 0.12s ease, border-color 0.15s ease;
+    }
+
+    .opt-btn:hover {
+      border-color: var(--motion);
+      transform: translateY(-1px);
+    }
+
+    .opt-btn.correct {
+      background: var(--green-soft);
+      border-color: var(--green);
+      border-left-color: var(--green-dark);
+      color: #1D641D;
+    }
+
+    .opt-btn.wrong {
+      background: #FFE8EC;
+      border-color: var(--red);
+      border-left-color: var(--red-dark);
+      color: #9B1E32;
+    }
+
+    .ans-big {
+      margin: 0;
+      font-family: var(--mono);
+      font-size: clamp(20px, 4.8vw, 28px);
+      font-weight: 800;
+      color: #1E631E;
+    }
+
+    .ans-explain {
+      margin: 0;
+      padding: 12px 14px;
+      background: #FFFFFF;
+      border: 2px solid #A4DDA4;
+      border-radius: 14px;
+      font-size: 13.5px;
+      font-weight: 700;
+      line-height: 1.55;
+      color: var(--ink);
+    }
+
+    /* 积木纸屑 */
+    .confetti-layer {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      overflow: hidden;
+      z-index: 10;
+    }
+
+    .confetti-dot {
+      position: absolute;
+      width: 10px;
+      height: 10px;
+      border-radius: 3px;
+      opacity: 0;
+      animation: confettiPop 0.9s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+    }
+
+    @keyframes confettiPop {
+      0% { opacity: 1; transform: translate(0, 0) scale(0.7) rotate(0deg); }
+      100% { opacity: 0; transform: translate(var(--dx), var(--dy)) scale(1.1) rotate(var(--deg)); }
+    }
+
+    .footer-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 8px;
+      font-size: 11.5px;
+      font-weight: 700;
+      color: var(--muted);
+      flex-shrink: 0;
+    }
+
+    .sample-btn {
+      border: 1.5px solid #C4D6EE;
+      background: var(--board-soft);
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 800;
+      padding: 3px 9px;
+      border-radius: 999px;
+      cursor: pointer;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .scene, .main-block, .chip, .vs-box, .flip-wrap {
+        transition: none !important;
+        animation: none !important;
+      }
+      .scene.active .main-block, .scene.active .chip, .scene.active .vs-box {
+        opacity: 1;
+        transform: none;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="stage-shell">
+    <section class="scratch-board" aria-label="Scratch 彩色积木编程闪卡">
+      <div class="confetti-layer" id="confettiLayer" aria-hidden="true"></div>
+
+      <div class="progress-row" id="progressRow">
+        <div class="prog-track" data-step="0" title="第 1 幕：积木概念"><div class="prog-fill"></div></div>
+        <div class="prog-track" data-step="1" title="第 2 幕：积木对比"><div class="prog-fill"></div></div>
+        <div class="prog-track" data-step="2" title="第 3 幕：脚本运行"><div class="prog-fill"></div></div>
+        <div class="prog-track" data-step="3" title="第 4 幕：闯关测验"><div class="prog-fill"></div></div>
+      </div>
+
+      <header class="header-bar">
+        <div class="badge-group">
+          <span class="lang-block" id="uiLangPill"><span id="uiLang">Python</span></span>
+          <span class="badge" id="uiSubject">Asas Sains Komputer</span>
+          <span class="unit-tag" id="uiUnit">Struktur Kawalan</span>
+        </div>
+        <div class="controls">
+          <button class="ctrl-btn" id="prevBtn" type="button" title="上一幕">&lt;</button>
+          <button class="ctrl-btn flag-btn" id="playBtn" type="button">暂停</button>
+          <button class="ctrl-btn" id="nextBtn" type="button" title="下一幕">&gt;</button>
+        </div>
+      </header>
+
+      <div class="viewport" id="viewport">
+        <!-- 第 1 幕：积木拼装概念 -->
+        <article class="scene active" data-scene="0">
+          <div class="stack-stage">
+            <div class="block-assembly">
+              <div class="hat-block" id="uiHatText">当点击绿旗 · 积木概念</div>
+              <div class="main-block">
+                <h1 class="hero-word" id="uiHeroWord">for i in range(n)</h1>
+              </div>
+              <div class="meaning-block">
+                <div class="block-icon" id="uiVisual" aria-hidden="true"></div>
+                <p class="hero-sub" id="uiHeroMeaning"></p>
+              </div>
+            </div>
+            <div class="chip-list" id="uiChips"></div>
+          </div>
+        </article>
+
+        <!-- 第 2 幕：积木双栏对比 -->
+        <article class="scene" data-scene="1">
+          <div class="vs-wrap">
+            <div class="eyebrow">积木工坊 · 双栏对比辨析</div>
+            <div class="vs-grid">
+              <div class="vs-box left">
+                <div>
+                  <span class="vs-head-pill" id="uiLeftTerm"></span>
+                  <p class="vs-desc" id="uiLeftDesc"></p>
+                </div>
+                <ul class="vs-examples" id="uiLeftExamples"></ul>
+              </div>
+              <div class="vs-box right">
+                <div>
+                  <span class="vs-head-pill" id="uiRightTerm"></span>
+                  <p class="vs-desc" id="uiRightDesc"></p>
+                </div>
+                <ul class="vs-examples" id="uiRightExamples"></ul>
+              </div>
+            </div>
+          </div>
+        </article>
+
+        <!-- 第 3 幕：积木脚本运行 + 退化例句 -->
+        <article class="scene" data-scene="2">
+          <div class="scene3-wrap">
+            <div class="eyebrow" id="uiScene3Title">脚本演示 · 积木代码与输出气泡</div>
+            <div class="script-card" id="uiCodeBox">
+              <div class="script-top">
+                <span id="uiCodeLangLabel">CODE BLOCKS</span>
+                <span>RUN OK</span>
+              </div>
+              <pre class="code-pre" id="uiCodeSnippet"></pre>
+              <div class="speech-bubble" id="uiOutputRow">
+                <span class="say-badge">输出</span>
+                <span id="uiCodeOutput"></span>
+              </div>
+            </div>
+
+            <div class="sentence-card hidden" id="uiSentenceBox">
+              <p class="sentence-bm" id="uiSentence"></p>
+            </div>
+
+            <p class="trans-note" id="uiTranslation"></p>
+            <div class="tip-pill" id="uiTip"></div>
+          </div>
+        </article>
+
+        <!-- 第 4 幕：积木 3D 翻卡 -->
+        <article class="scene" data-scene="3">
+          <div class="flip-wrap" id="flipWrap">
+            <div class="flip-face">
+              <div>
+                <div class="eyebrow" style="color:#5C32B2">绿旗小测验 · 选出正确积木</div>
+                <div class="quiz-q" id="uiQuizQ"></div>
+                <div class="opt-list" id="uiQuizOpts"></div>
+              </div>
+              <div style="display:flex;justify-content:space-between;align-items:center">
+                <span style="font-size:11.5px;color:#5C32B2;font-weight:700" id="uiQuizHint">提示：点选积木块，或 4 秒后揭晓</span>
+                <button class="ctrl-btn" id="flipNowBtn" type="button">看答案</button>
+              </div>
+            </div>
+            <div class="flip-face flip-back">
+              <div class="eyebrow" style="color:#1E631E">闯关成功 · 正确答案</div>
+              <p class="ans-big" id="uiAnsText"></p>
+              <p class="ans-explain" id="uiAnsExplain"></p>
+              <div>
+                <button class="ctrl-btn flag-btn" id="replayBtn" type="button">再玩一次</button>
+              </div>
+            </div>
+          </div>
+        </article>
+      </div>
+
+      <footer class="footer-bar">
+        <div id="sampleSwitchWrap">
+          <button class="sample-btn" id="sampleSwitchBtn" type="button">切换样例 1/3</button>
+        </div>
+        <span id="uiStageLabel">第 1 / 4 幕</span>
+      </footer>
+    </section>
+  </main>
+
+  <script>
+    const SAMPLES = [
+      {
+        id: "sample_py_for_range",
+        type: "code",
+        lang: "Python",
+        subject: "Asas Sains Komputer",
+        unit: "Struktur Kawalan",
+        word: "for i in range(n)",
+        meaning: "计数循环 (Count-controlled Loop)：重复执行代码块 n 次，i 从 0 数到 n-1。",
+        chips: ["默认从 0 开始", "不包含上限 n", "对应 Scratch 重复 n 次"],
+        iconSvg: `<svg viewBox="0 0 24 24"><polyline points="17 1 21 5 17 9"></polyline><path d="M3 11V9a4 4 0 0 1 4-4h14"></path><polyline points="7 23 3 19 7 15"></polyline><path d="M21 13v2a4 4 0 0 1-4 4H3"></path></svg>`,
+        compare: {
+          left: {
+            term: "range(3)",
+            desc: "只传上限：从 0 到 2 共 3 次",
+            items: ["i = 0, 1, 2", "循环次数 = 3", "不含 3 本身"]
+          },
+          right: {
+            term: "range(1, 4)",
+            desc: "指定起点与终点：含左不含右",
+            items: ["i = 1, 2, 3", "从 1 开始计数", "同样不含 4"]
+          }
+        },
+        codeSnippet: "for i in range(1, 4):\n    print('Step', i)",
+        codeOutput: "Step 1 | Step 2 | Step 3",
+        sentenceBefore: "使用 ",
+        sentenceHighlight: "range(1, 4)",
+        sentenceAfter: " 可以精准控制循环次数。",
+        translation: "range(1, 4) 会依次产生 1、2、3，就像 Scratch 的「重复执行 3 次」积木。",
+        tip: "记忆口诀：含头不含尾！range(a, b) 一共循环 b - a 次。",
+        quiz: {
+          question: "for i in range(5): 会打印多少个数字？",
+          options: ["A. 4 个 (0~3)", "B. 5 个 (0~4)", "C. 5 个 (1~5)"],
+          answerIndex: 1,
+          answerText: "B. 5 个 (0~4)",
+          explain: "range(5) 从 0 开始数，到 4 结束，共有 0, 1, 2, 3, 4 五个数字。"
+        }
+      },
+      {
+        id: "sample_scratch_ifelse",
+        type: "code",
+        lang: "Scratch / Python",
+        subject: "Asas Sains Komputer",
+        unit: "Pilihan Dwipilihan",
+        word: "if ... else",
+        meaning: "双分支条件选择：条件为真走 if 路径，为假则走 else 路径。",
+        chips: ["非此即彼二选一", "条件需返回 True/False", "注意冒号与缩进"],
+        iconSvg: `<svg viewBox="0 0 24 24"><path d="M6 3v12"></path><circle cx="18" cy="6" r="3"></circle><circle cx="6" cy="18" r="3"></circle><path d="M18 9a9 9 0 0 1-9 9"></path></svg>`,
+        compare: {
+          left: {
+            term: "单分支 if",
+            desc: "满足条件才执行，不满足直接跳过",
+            items: ["只有一条岔路", "适合额外提醒逻辑", "无 else 保底"]
+          },
+          right: {
+            term: "双分支 if-else",
+            desc: "两条路必走其一，不会漏掉情况",
+            items: ["True 走第一分支", "False 走 else 分支", "适合及格/不及格判定"]
+          }
+        },
+        codeSnippet: "score = 75\nif score >= 50:\n    print('Lulus 及格')\nelse:\n    print('Cuba lagi')",
+        codeOutput: "Lulus 及格",
+        sentenceBefore: "遇到二选一逻辑时用 ",
+        sentenceHighlight: "if ... else",
+        sentenceAfter: " 积木判断分支。",
+        translation: "score 为 75，满足 score >= 50，因此执行 if 内部语句并跳过 else。",
+        tip: "避坑口诀：判断相等要用两个等号 ==，写成一个等号 = 会变成赋值报错！",
+        quiz: {
+          question: "若 score = 40，上述代码会输出什么？",
+          options: ["A. Lulus 及格", "B. Cuba lagi", "C. 什么都不输出"],
+          answerIndex: 1,
+          answerText: "B. Cuba lagi",
+          explain: "40 >= 50 为 False，程序自动进入 else 分支，输出 Cuba lagi。"
+        }
+      },
+      {
+        id: "sample_py_def_return",
+        type: "code",
+        lang: "Python",
+        subject: "Sains Komputer",
+        unit: "Subaturcara & Fungsi",
+        word: "def & return",
+        meaning: "自定义函数积木：把重复步骤打包成新积木，并用 return 送回结果。",
+        chips: ["复用代码减少重复", "return 立即结束函数", "print 不等于 return"],
+        iconSvg: `<svg viewBox="0 0 24 24"><rect x="3" y="3" width="8" height="8" rx="2"></rect><rect x="13" y="13" width="8" height="8" rx="2"></rect><path d="M11 7h4a2 2 0 0 1 2 2v4"></path></svg>`,
+        compare: {
+          left: {
+            term: "return 返回值",
+            desc: "把算好的数据交还给调用者继续用",
+            items: ["可存入变量", "可参与后续运算", "无 return 默认 None"]
+          },
+          right: {
+            term: "print() 打印",
+            desc: "只把文字显示在屏幕上，不传回数据",
+            items: ["无法赋值给变量", "只供人眼查看", "返回值是 None"]
+          }
+        },
+        codeSnippet: "def add(a, b):\n    return a + b\nprint(add(3, 5) * 2)",
+        codeOutput: "16",
+        sentenceBefore: "需要把计算结果继续往下传递时用 ",
+        sentenceHighlight: "return",
+        sentenceAfter: "。",
+        translation: "add(3, 5) 返回数值 8，外层再乘以 2 得到 16。",
+        tip: "自制积木秘诀：定义完函数 def 后一定要「调用」add(3, 5)，积木才会真正运行！",
+        quiz: {
+          question: "如果函数里只写了 print(a + b) 而没写 return，x = add(3, 5) 后 x 是多少？",
+          options: ["A. 8", "B. 0", "C. None"],
+          answerIndex: 2,
+          answerText: "C. None",
+          explain: "没有 return 语句的函数默认返回 None（空值），不能继续拿来做乘法计算。"
+        }
+      }
+    ];
+
+    const DEFAULT_CARD = SAMPLES[0];
+
+    function decodeBase64UrlUtf8(raw) {
+      const b64 = raw.replace(/-/g, "+").replace(/_/g, "/");
+      const padded = b64.padEnd(Math.ceil(b64.length / 4) * 4, "=");
+      const bin = atob(padded);
+      const bytes = Uint8Array.from(bin, (c) => c.charCodeAt(0));
+      return new TextDecoder("utf-8").decode(bytes);
+    }
+
+    function loadCardData() {
+      try {
+        const params = new URLSearchParams(location.search);
+        const raw = params.get("d");
+        if (!raw) return { card: DEFAULT_CARD, fromUrl: false };
+        const parsed = JSON.parse(decodeBase64UrlUtf8(raw));
+        return {
+          fromUrl: true,
+          card: {
+            ...DEFAULT_CARD,
+            ...parsed,
+            lang: parsed.lang || "",
+            codeSnippet: parsed.codeSnippet !== undefined ? parsed.codeSnippet : "",
+            codeOutput: parsed.codeOutput !== undefined ? parsed.codeOutput : "",
+            sentenceBefore: parsed.sentenceBefore !== undefined ? parsed.sentenceBefore : "",
+            sentenceHighlight: parsed.sentenceHighlight !== undefined ? parsed.sentenceHighlight : "",
+            sentenceAfter: parsed.sentenceAfter !== undefined ? parsed.sentenceAfter : "",
+            iconSvg: parsed.iconSvg || DEFAULT_CARD.iconSvg,
+            chips: Array.isArray(parsed.chips) ? parsed.chips : DEFAULT_CARD.chips,
+            compare: {
+              left: { ...DEFAULT_CARD.compare.left, ...((parsed.compare && parsed.compare.left) || {}) },
+              right: { ...DEFAULT_CARD.compare.right, ...((parsed.compare && parsed.compare.right) || {}) }
+            },
+            quiz: { ...DEFAULT_CARD.quiz, ...(parsed.quiz || {}) }
+          }
+        };
+      } catch (e) {
+        return { card: DEFAULT_CARD, fromUrl: false };
+      }
+    }
+
+    let sampleIdx = 0;
+    const loaded = loadCardData();
+    let card = loaded.card;
+
+    if (loaded.fromUrl) {
+      document.getElementById("sampleSwitchWrap").classList.add("hidden");
+    }
+
+    function playChime() {
+      try {
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        [587.33, 739.99, 880.0, 1174.66].forEach((freq, i) => {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = "triangle";
+          osc.frequency.value = freq;
+          gain.gain.setValueAtTime(0.06, ctx.currentTime + i * 0.06);
+          gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + i * 0.06 + 0.24);
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start(ctx.currentTime + i * 0.06);
+          osc.stop(ctx.currentTime + i * 0.06 + 0.25);
+        });
+      } catch (_) {}
+    }
+
+    function burstConfetti() {
+      const layer = document.getElementById("confettiLayer");
+      const colors = ["#4C97FF", "#9966FF", "#FFAB19", "#59C059", "#FF6680"];
+      for (let i = 0; i < 22; i++) {
+        const dot = document.createElement("span");
+        dot.className = "confetti-dot";
+        dot.style.left = "50%";
+        dot.style.top = "52%";
+        dot.style.background = colors[i % colors.length];
+        const ang = (Math.PI * 2 * i) / 22 + (Math.random() - 0.5) * 0.3;
+        const dist = 75 + Math.random() * 145;
+        dot.style.setProperty("--dx", `${Math.cos(ang) * dist}px`);
+        dot.style.setProperty("--dy", `${Math.sin(ang) * dist}px`);
+        dot.style.setProperty("--deg", `${Math.round(Math.random() * 360)}deg`);
+        layer.appendChild(dot);
+        setTimeout(() => dot.remove(), 950);
+      }
+    }
+
+    function renderCard(c) {
+      const langText = (c.lang || "").trim();
+      const langPill = document.getElementById("uiLangPill");
+      if (langText) {
+        langPill.classList.remove("hidden");
+        document.getElementById("uiLang").textContent = langText;
+        document.getElementById("uiHatText").textContent = `当运行 ${langText} 时 · 核心积木`;
+      } else {
+        langPill.classList.add("hidden");
+        document.getElementById("uiHatText").textContent = `当点击绿旗时 · 核心概念`;
+      }
+
+      document.getElementById("uiSubject").textContent = c.subject || "";
+      document.getElementById("uiUnit").textContent = c.unit || "";
+      document.getElementById("uiHeroWord").textContent = c.word || "";
+      document.getElementById("uiHeroMeaning").textContent = c.meaning || "";
+      document.getElementById("uiVisual").innerHTML = c.iconSvg || DEFAULT_CARD.iconSvg;
+
+      const chipsEl = document.getElementById("uiChips");
+      chipsEl.innerHTML = "";
+      (c.chips || []).slice(0, 3).forEach((txt) => {
+        const span = document.createElement("span");
+        span.className = "chip";
+        span.textContent = txt;
+        chipsEl.appendChild(span);
+      });
+
+      document.getElementById("uiLeftTerm").textContent = c.compare.left.term || "";
+      document.getElementById("uiLeftDesc").textContent = c.compare.left.desc || "";
+      const leftUl = document.getElementById("uiLeftExamples");
+      leftUl.innerHTML = "";
+      (c.compare.left.items || []).forEach((it) => {
+        const li = document.createElement("li");
+        li.textContent = it;
+        leftUl.appendChild(li);
+      });
+
+      document.getElementById("uiRightTerm").textContent = c.compare.right.term || "";
+      document.getElementById("uiRightDesc").textContent = c.compare.right.desc || "";
+      const rightUl = document.getElementById("uiRightExamples");
+      rightUl.innerHTML = "";
+      (c.compare.right.items || []).forEach((it) => {
+        const li = document.createElement("li");
+        li.textContent = it;
+        rightUl.appendChild(li);
+      });
+
+      const hasCode = typeof c.codeSnippet === "string" && c.codeSnippet.trim().length > 0;
+      const codeBox = document.getElementById("uiCodeBox");
+      const sentBox = document.getElementById("uiSentenceBox");
+      const scene3Title = document.getElementById("uiScene3Title");
+
+      if (hasCode) {
+        scene3Title.textContent = "脚本演示 · 积木代码与输出气泡";
+        codeBox.classList.remove("hidden");
+        sentBox.classList.add("hidden");
+        document.getElementById("uiCodeLangLabel").textContent = (langText || "CODE").toUpperCase() + " SCRIPT";
+        document.getElementById("uiCodeSnippet").textContent = c.codeSnippet;
+        const outRow = document.getElementById("uiOutputRow");
+        const hasOut = typeof c.codeOutput === "string" && c.codeOutput.trim().length > 0;
+        outRow.classList.toggle("hidden", !hasOut);
+        document.getElementById("uiCodeOutput").textContent = c.codeOutput || "";
+      } else {
+        scene3Title.textContent = "情境例句 · 角色对话卡";
+        codeBox.classList.add("hidden");
+        sentBox.classList.remove("hidden");
+        const sentEl = document.getElementById("uiSentence");
+        sentEl.innerHTML = "";
+        sentEl.appendChild(document.createTextNode(c.sentenceBefore || ""));
+        if (c.sentenceHighlight) {
+          const hl = document.createElement("span");
+          hl.className = "hl";
+          hl.textContent = c.sentenceHighlight;
+          sentEl.appendChild(hl);
+        }
+        sentEl.appendChild(document.createTextNode(c.sentenceAfter || ""));
+      }
+
+      const transEl = document.getElementById("uiTranslation");
+      transEl.textContent = c.translation || "";
+      transEl.classList.toggle("hidden", !c.translation);
+
+      const tipEl = document.getElementById("uiTip");
+      tipEl.textContent = c.tip || "";
+      tipEl.classList.toggle("hidden", !c.tip);
+
+      document.getElementById("uiQuizQ").textContent = c.quiz.question || "";
+      document.getElementById("uiAnsText").textContent = c.quiz.answerText || "";
+      document.getElementById("uiAnsExplain").textContent = c.quiz.explain || "";
+
+      const optsEl = document.getElementById("uiQuizOpts");
+      optsEl.innerHTML = "";
+      (c.quiz.options || []).forEach((opt, idx) => {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "opt-btn";
+        btn.innerHTML = `<span></span><span></span>`;
+        btn.firstElementChild.textContent = opt;
+        btn.addEventListener("click", () => handleAnswer(idx, btn));
+        optsEl.appendChild(btn);
+      });
+    }
+
+    const DURATIONS = [4200, 4600, 5000, 7200];
+    const scenes = Array.from(document.querySelectorAll(".scene"));
+    const tracks = Array.from(document.querySelectorAll(".prog-track"));
+    const fills = tracks.map((t) => t.querySelector(".prog-fill"));
+    const flipWrap = document.getElementById("flipWrap");
+    const playBtn = document.getElementById("playBtn");
+    const stageLabel = document.getElementById("uiStageLabel");
+
+    let current = 0;
+    let elapsed = 0;
+    let playing = !window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    let flipped = false;
+    let flipTimer = null;
+    let lastTick = performance.now();
+
+    function updatePlayLabel() {
+      playBtn.textContent = playing ? "暂停" : "播放";
+    }
+
+    function setScene(nextIdx) {
+      if (flipTimer) {
+        clearTimeout(flipTimer);
+        flipTimer = null;
+      }
+      const prevIdx = current;
+      current = (nextIdx + scenes.length) % scenes.length;
+      elapsed = 0;
+      flipped = false;
+      flipWrap.classList.remove("flipped");
+
+      scenes.forEach((s, i) => {
+        s.classList.remove("active", "leaving");
+        if (i === current) s.classList.add("active");
+        else if (i === prevIdx && prevIdx !== current) s.classList.add("leaving");
+      });
+
+      tracks.forEach((t, i) => {
+        t.classList.toggle("done", i < current);
+        fills[i].style.transform = i < current ? "scaleX(1)" : "scaleX(0)";
+      });
+
+      stageLabel.textContent = `第 ${current + 1} / ${scenes.length} 幕`;
+      document.querySelectorAll(".opt-btn").forEach((b) => {
+        b.classList.remove("correct", "wrong");
+        b.lastElementChild.textContent = "";
+      });
+    }
+
+    function handleAnswer(idx, btn) {
+      const ok = idx === card.quiz.answerIndex;
+      btn.classList.add(ok ? "correct" : "wrong");
+      btn.lastElementChild.textContent = ok ? "答对啦" : "再试试";
+      if (ok) {
+        playChime();
+        burstConfetti();
+        if (flipTimer) clearTimeout(flipTimer);
+        flipTimer = setTimeout(() => {
+          flipped = true;
+          flipWrap.classList.add("flipped");
+        }, 550);
+      }
+    }
+
+    function tick(now) {
+      const dt = now - lastTick;
+      lastTick = now;
+
+      if (playing) {
+        elapsed += dt;
+        const dur = DURATIONS[current];
+        const ratio = Math.min(1, elapsed / dur);
+        fills[current].style.transform = `scaleX(${ratio})`;
+
+        if (current === 3 && !flipped && elapsed >= 4000) {
+          flipped = true;
+          flipWrap.classList.add("flipped");
+        }
+        if (elapsed >= dur) {
+          setScene(current + 1);
+        }
+      }
+      requestAnimationFrame(tick);
+    }
+
+    playBtn.addEventListener("click", () => {
+      playing = !playing;
+      updatePlayLabel();
+    });
+    document.getElementById("prevBtn").addEventListener("click", () => setScene(current - 1));
+    document.getElementById("nextBtn").addEventListener("click", () => setScene(current + 1));
+    document.getElementById("flipNowBtn").addEventListener("click", () => {
+      flipped = !flipped;
+      flipWrap.classList.toggle("flipped", flipped);
+    });
+    document.getElementById("replayBtn").addEventListener("click", () => setScene(0));
+    tracks.forEach((t) => {
+      t.addEventListener("click", () => setScene(Number(t.dataset.step)));
+    });
+
+    const sampleBtn = document.getElementById("sampleSwitchBtn");
+    sampleBtn.addEventListener("click", () => {
+      sampleIdx = (sampleIdx + 1) % SAMPLES.length;
+      card = SAMPLES[sampleIdx];
+      sampleBtn.textContent = `切换样例 ${sampleIdx + 1}/${SAMPLES.length}`;
+      renderCard(card);
+      setScene(0);
+    });
+
+    renderCard(card);
+    updatePlayLabel();
+    setScene(0);
+    requestAnimationFrame(tick);
+  </script>
+</body>
+</html>
